@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: superport
+      POSTGRES_PASSWORD: superport
+      POSTGRES_DB: superport
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U superport"]
+      interval: 3s
+      retries: 20
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://superport:superport@db:5432/superport
+      SECRET_KEY: change-me-in-production-use-a-long-random-secret
+      DEMO_MODE: "true"
+      SEED_DEMO_DATA: "true"
+      AI_MODE: demo
+      UPLOAD_DIR: /data/uploads
+      INTELLIGENCE_MODE: ${INTELLIGENCE_MODE:-off}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      SERPAPI_API_KEY: ${SERPAPI_API_KEY:-}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+    volumes: [uploads:/data/uploads]
+    depends_on:
+      db: { condition: service_healthy }
+    ports: ["8000:8000"]
+
+  web:
+    build: ./frontend
+    environment:
+      BACKEND_URL: http://api:8000
+    depends_on: [api]
+    ports: ["3000:3000"]
+
+volumes:
+  pgdata:
+  uploads:

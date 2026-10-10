@@ -1,0 +1,5 @@
+{"_fixture": true, "news_results": [
+ {"position": 1, "title": "[Sample] Container dwell time rises at Chennai Port as congestion builds", "link": "https://example.org/sample/radar-1", "source": "Sample Maritime Daily", "date": "2 hours ago", "snippet": "Sample text. Chennai Port reports longer container dwell times and a growing yard backlog."},
+ {"position": 2, "title": "[Sample] Chennai Port congestion: shipping lines warn of delays", "link": "https://example.org/sample/radar-2", "source": "Sample Shipping Times", "date": "5 hours ago", "snippet": "Sample text. Carriers warn of delays at Chennai Port for the coming week."},
+ {"position": 3, "title": "[Sample] India revises import duty rules for lithium-ion battery packs", "link": "https://example.org/sample/radar-3", "source": "Sample Trade Gazette", "date": "1 day ago", "snippet": "Sample text. A customs notification changes the duty on lithium-ion battery imports into India."}
+]}

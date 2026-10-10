@@ -1,0 +1,37 @@
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/plus-jakarta-sans";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { @apply bg-alice text-ink antialiased; font-feature-settings: "cv11", "ss01"; }
+  body { @apply font-sans; }
+  h1, h2, h3, h4 { @apply font-display tracking-tight; }
+  ::selection { background: #185df133; }
+  :focus-visible { outline: 2px solid #185DF1; outline-offset: 2px; border-radius: 8px; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #c5d3ee; border-radius: 99px; border: 2px solid transparent; background-clip: padding-box; }
+}
+
+@layer components {
+  .ocean-bg { background: linear-gradient(155deg, #031130 0%, #07204F 38%, #0C3FA8 78%, #185DF1 118%); }
+  .ocean-text { background: linear-gradient(100deg, #FFFFFF 0%, #BCD3FF 45%, #7FB0FF 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .brand-gradient { background: linear-gradient(120deg, #124BC4 0%, #185DF1 45%, #4F86F6 100%); background-size: 200% 200%; }
+  .glass { background: linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.05)); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  .glass-light { background: rgba(255,255,255,.72); border: 1px solid rgba(255,255,255,.9); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); }
+  .surface { @apply bg-white rounded-2xl shadow-card border border-alice-200/70; }
+  .field-label { @apply block text-[13px] font-medium text-ink-soft mb-1.5; }
+  .field-input { @apply w-full rounded-xl border border-alice-200 bg-white px-3.5 py-2.5 text-[15px] text-ink placeholder:text-ink-faint transition shadow-[inset_0_1px_0_rgba(3,17,48,.02)] hover:border-port-200 focus:border-port focus:ring-4 focus:ring-port/15 focus:outline-none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body, html { background: white !important; }
+  .print-area { box-shadow: none !important; border: none !important; }
+}

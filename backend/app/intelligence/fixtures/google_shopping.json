@@ -1,0 +1,8 @@
+{"_fixture": true, "shopping_results": [
+ {"position": 1, "title": "[Sample] 48V 100Ah lithium battery pack, rack mount", "price": "$690.00", "extracted_price": 690.0, "source": "Sample Store A", "product_link": "https://example.org/sample/listing-1"},
+ {"position": 2, "title": "[Sample] 48V 100Ah LiFePO4 energy storage battery", "price": "$720.00", "extracted_price": 720.0, "source": "Sample Store B", "product_link": "https://example.org/sample/listing-2"},
+ {"position": 3, "title": "[Sample] 48V 100Ah server rack battery 5kWh", "price": "$810.00", "extracted_price": 810.0, "source": "Sample Store C", "product_link": "https://example.org/sample/listing-3"},
+ {"position": 4, "title": "[Sample] 48V 100Ah lithium battery for solar storage", "price": "$655.00", "extracted_price": 655.0, "source": "Sample Store D", "product_link": "https://example.org/sample/listing-4"},
+ {"position": 5, "title": "[Sample] 48V 100Ah home battery pack", "price": "$899.00", "extracted_price": 899.0, "source": "Sample Store E", "product_link": "https://example.org/sample/listing-5"},
+ {"position": 6, "title": "[Sample] Battery management board for 48V pack", "price": "$18.00", "extracted_price": 18.0, "source": "Sample Store F", "product_link": "https://example.org/sample/listing-6"}
+]}

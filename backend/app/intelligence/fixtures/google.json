@@ -1,0 +1,9 @@
+{
+  "_fixture": true,
+  "search_metadata": {"status": "Success (sample fixture)"},
+  "organic_results": [
+    {"position": 1, "title": "Sample result: tariff heading lookup for lithium-ion accumulators", "link": "https://example.org/sample/tariff-heading-8507", "snippet": "Sample text. Heading 8507 covers electric accumulators; subheading 8507.60 covers lithium-ion accumulators."},
+    {"position": 2, "title": "Sample result: classifying battery packs for energy storage", "link": "https://example.org/sample/classifying-battery-packs", "snippet": "Sample text. Rechargeable lithium-ion battery packs are normally classified under 8507.60."},
+    {"position": 3, "title": "Sample result: shipping lithium batteries (dangerous goods class 9)", "link": "https://example.org/sample/lithium-dangerous-goods", "snippet": "Sample text. Lithium-ion batteries ship as UN3480 or UN3481 and need a UN 38.3 test summary."}
+  ]
+}
