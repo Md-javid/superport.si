@@ -21,6 +21,8 @@ export class ApiError extends Error {
   }
 }
 
+export const API_BASE = typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:8000/api" : "/api";
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   const token = tokenStore.get();
@@ -28,7 +30,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (init.body && !(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
   let res: Response;
   try {
-    res = await fetch(`/api${path}`, { ...init, headers });
+    res = await fetch(`${API_BASE}${path}`, { ...init, headers });
   } catch {
     throw new ApiError("Cannot reach the SuperPort API. Check that the backend is running on port 8000.", 0);
   }
@@ -97,7 +99,7 @@ export const api = {
   serpapiShowcase: () => request<SerpApiShowcase>("/intelligence/serpapi"),
   remind: (id: number, itemId: number) => post<{ notified: number }>(`/shipments/${id}/checklist/${itemId}/remind`),
   downloadChecklist: async (id: number, itemId: number, filename: string) => {
-    const res = await fetch(`/api/shipments/${id}/checklist/${itemId}/file`, { headers: { Authorization: `Bearer ${tokenStore.get() ?? ""}` } });
+    const res = await fetch(`${API_BASE}/shipments/${id}/checklist/${itemId}/file`, { headers: { Authorization: `Bearer ${tokenStore.get() ?? ""}` } });
     if (!res.ok) throw new ApiError("Could not download the file.", res.status);
     const url = URL.createObjectURL(await res.blob());
     const a = document.createElement("a");
