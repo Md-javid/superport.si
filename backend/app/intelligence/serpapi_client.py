@@ -42,11 +42,12 @@ def search(engine: str, params: dict, *, shipment_id: int | None = None, force: 
         raise NotConfigured("SERPAPI_API_KEY is not set.")
 
     payload = {"engine": engine, **params}
+    kind = "google_news" if params.get("tbm") == "nws" else engine  # news searches are counted separately
     key = make_key("serpapi", payload)
     if not force:
         hit = cache_get("serpapi", key, settings.cache_ttl_hours)
         if hit is not None:
-            log_usage("serpapi", engine, shipment_id, cached=True)
+            log_usage("serpapi", kind, shipment_id, cached=True)
             return hit
     if live_calls_today("serpapi") >= settings.serpapi_daily_cap:
         raise BudgetExceeded(f"Daily SerpApi cap reached ({settings.serpapi_daily_cap} searches). Raise SERPAPI_DAILY_CAP if intended.")
@@ -57,19 +58,19 @@ def search(engine: str, params: dict, *, shipment_id: int | None = None, force: 
         with httpx.Client(transport=_transport, timeout=25) as client:
             response = client.get(BASE, params={**payload, "api_key": settings.serpapi_api_key})
     except httpx.HTTPError as exc:
-        log_usage("serpapi", engine, shipment_id, ok=False, detail=type(exc).__name__)
+        log_usage("serpapi", kind, shipment_id, ok=False, detail=type(exc).__name__)
         raise UpstreamError("Could not reach SerpApi. Check your internet connection.") from exc
 
     if response.status_code in (401, 403):
-        log_usage("serpapi", engine, shipment_id, ok=False, detail=f"http {response.status_code}")
+        log_usage("serpapi", kind, shipment_id, ok=False, detail=f"http {response.status_code}")
         raise UpstreamError("SerpApi rejected the API key. Check SERPAPI_API_KEY.")
     if response.status_code == 429:
-        log_usage("serpapi", engine, shipment_id, ok=False, detail="http 429")
+        log_usage("serpapi", kind, shipment_id, ok=False, detail="http 429")
         raise UpstreamError("SerpApi rate or plan limit reached.")
     try:
         data = response.json()
     except ValueError as exc:
-        log_usage("serpapi", engine, shipment_id, ok=False, detail=f"non-json http {response.status_code}")
+        log_usage("serpapi", kind, shipment_id, ok=False, detail=f"non-json http {response.status_code}")
         raise UpstreamError(f"SerpApi returned an unreadable response (HTTP {response.status_code}).") from exc
 
     error = data.get("error") if isinstance(data, dict) else None
@@ -77,12 +78,12 @@ def search(engine: str, params: dict, *, shipment_id: int | None = None, force: 
         if "hasn't returned any results" in str(error).lower() or "no results" in str(error).lower():
             data = {"organic_results": [], "empty": True}  # a valid, empty answer
         else:
-            log_usage("serpapi", engine, shipment_id, ok=False, detail=str(error))
+            log_usage("serpapi", kind, shipment_id, ok=False, detail=str(error))
             raise UpstreamError(f"SerpApi error: {error}")
     elif response.status_code >= 400:
-        log_usage("serpapi", engine, shipment_id, ok=False, detail=f"http {response.status_code}")
+        log_usage("serpapi", kind, shipment_id, ok=False, detail=f"http {response.status_code}")
         raise UpstreamError(f"SerpApi returned HTTP {response.status_code}.")
 
     cache_put("serpapi", key, payload, data)
-    log_usage("serpapi", engine, shipment_id)
+    log_usage("serpapi", kind, shipment_id)
     return data

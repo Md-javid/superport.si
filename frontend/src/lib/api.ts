@@ -1,4 +1,4 @@
-import type { ControlTower, InvitationInfo, TrackingSummary, NotificationItem, PartyRole, TeamData, Workspace, ClearanceSummary, DashboardData, DocType, EvidenceItem, IntelligenceStatus, ScanSummary, Signal, ShipmentDetail, ShipmentSummary, User } from "./types";
+import type { CopilotAnswer, Draft, LibraryDoc, LibraryHit, RagStatus, SerpApiShowcase, ControlTower, InvitationInfo, TrackingSummary, NotificationItem, PartyRole, TeamData, Workspace, ClearanceSummary, DashboardData, DocType, EvidenceItem, IntelligenceStatus, ScanSummary, Signal, ShipmentDetail, ShipmentSummary, User } from "./types";
 
 const TOKEN_KEY = "superport.token";
 
@@ -78,6 +78,23 @@ export const api = {
   updateTimeline: (id: number, key: string, body: { status?: string; planned_at?: string; actual_at?: string; note?: string }) => post<{ ok: boolean }>(`/shipments/${id}/timeline/${key}`, body),
   refreshTracking: (id: number) => post<TrackingSummary>(`/shipments/${id}/tracking/refresh`),
   controlTower: () => request<ControlTower>("/control-tower"),
+  ask: (id: number, question: string) => post<CopilotAnswer>(`/shipments/${id}/copilot/ask`, { question }),
+  copilotHistory: (id: number) => request<CopilotAnswer[]>(`/shipments/${id}/copilot/history`),
+  draftUpdate: (id: number, audience: PartyRole) => post<Draft>(`/shipments/${id}/copilot/draft-update`, { audience }),
+  sendUpdate: (id: number, to_roles: PartyRole[], subject: string, body: string) => post<{ sent_to: number }>(`/shipments/${id}/updates/send`, { to_roles, subject, body }),
+  library: () => request<{ status: RagStatus; documents: LibraryDoc[] }>("/knowledge"),
+  uploadLibrary: (file: File, title: string, tags: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("title", title);
+    form.append("tags", tags);
+    return request<LibraryDoc>("/knowledge", { method: "POST", body: form });
+  },
+  deleteLibrary: (id: number) => request<{ ok: boolean }>(`/knowledge/${id}`, { method: "DELETE" }),
+  searchLibrary: (query: string, scope: "library" | "org") => post<LibraryHit[]>("/knowledge/search", { query, scope, k: 6 }),
+  reindexLibrary: () => post<{ chunks: number }>("/knowledge/reindex"),
+  indexShipments: () => post<{ chunks: number }>("/knowledge/index-shipments"),
+  serpapiShowcase: () => request<SerpApiShowcase>("/intelligence/serpapi"),
   remind: (id: number, itemId: number) => post<{ notified: number }>(`/shipments/${id}/checklist/${itemId}/remind`),
   downloadChecklist: async (id: number, itemId: number, filename: string) => {
     const res = await fetch(`/api/shipments/${id}/checklist/${itemId}/file`, { headers: { Authorization: `Bearer ${tokenStore.get() ?? ""}` } });

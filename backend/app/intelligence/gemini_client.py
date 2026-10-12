@@ -180,3 +180,62 @@ def generate_json(task: str, **kwargs) -> tuple[dict, dict]:
             return parse_json(result["text"]), result
         except ValueError as exc:
             raise UpstreamError("Gemini did not return valid JSON.") from exc
+
+
+# ---------------------------------------------------------------- embeddings
+_embed_model: dict[str, str] = {}
+
+
+def pick_embedding_model(models: list[dict]) -> str:
+    cands = []
+    for m in models:
+        name = m.get("name", "").removeprefix("models/")
+        methods = m.get("supportedGenerationMethods", [])
+        if "embedding" in name and ("embedContent" in methods or "batchEmbedContents" in methods):
+            ver = re.search(r"(\d+(?:\.\d+)?)", name)
+            cands.append((float(ver.group(1)) if ver else 0.0, not re.search(r"preview|exp", name), name))
+    if not cands:
+        raise UpstreamError("This Gemini key has no embedding model. Set GEMINI_EMBEDDING_MODEL or check your plan.")
+    return max(cands)[2]
+
+
+def resolve_embedding_model() -> str:
+    configured = get_settings().gemini_embedding_model
+    if configured:
+        return configured
+    if "m" not in _embed_model:
+        _embed_model["m"] = pick_embedding_model(list_models())
+    return _embed_model["m"]
+
+
+def embed(texts: list[str], *, task: str, dim: int) -> tuple[list[list[float]], str]:
+    """Embed texts (task: RETRIEVAL_DOCUMENT or RETRIEVAL_QUERY). Returns vectors and the model used."""
+    if not gemini_ready():
+        raise NotConfigured("Gemini is not configured (needs INTELLIGENCE_MODE=live and GEMINI_API_KEY).")
+    model = resolve_embedding_model()
+    out: list[list[float]] = []
+    for i in range(0, len(texts), 100):
+        batch = texts[i : i + 100]
+        reqs = [{"model": f"models/{model}", "content": {"parts": [{"text": t}]}, "taskType": task, "outputDimensionality": dim} for t in batch]
+        try:
+            with httpx.Client(transport=_transport, timeout=60) as client:
+                response = client.post(f"{BASE}/models/{model}:batchEmbedContents", headers=_headers(), json={"requests": reqs})
+                if response.status_code == 400 and "outputdimensionality" in response.text.lower():
+                    for r in reqs:
+                        r.pop("outputDimensionality", None)
+                    response = client.post(f"{BASE}/models/{model}:batchEmbedContents", headers=_headers(), json={"requests": reqs})
+        except httpx.HTTPError as exc:
+            log_usage("gemini", "embed", None, ok=False, detail=type(exc).__name__)
+            raise UpstreamError("Could not reach the Gemini API.") from exc
+        try:
+            _fail(response, model)
+        except UpstreamError as exc:
+            log_usage("gemini", "embed", None, ok=False, detail=str(exc))
+            raise
+        vectors = [e.get("values", []) for e in response.json().get("embeddings", [])]
+        if len(vectors) != len(batch) or any(len(v) != dim for v in vectors):
+            got = len(vectors[0]) if vectors else 0
+            raise UpstreamError(f"Embedding size {got} does not match EMBEDDING_DIM={dim}. Set EMBEDDING_DIM to {got or dim}, or use a model that supports {dim} dimensions.")
+        out += vectors
+        log_usage("gemini", "embed", None)
+    return out, model

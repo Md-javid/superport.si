@@ -145,3 +145,14 @@ export interface TowerShipment {
   exceptions: { category: TowerCategory; severity: "red" | "amber" | "green"; title: string; detail: string }[]; severity: "red" | "amber" | "green"; link: string; workspace_link: string; on_track: boolean;
 }
 export interface ControlTower { counts: Record<TowerCategory, number>; labels: Record<TowerCategory, string>; shipments: TowerShipment[]; total: number }
+
+export interface EvidenceFact { id: string; agent: string; text: string; source: { type: string; label: string; url?: string | null; page?: number | null; score?: number } }
+export interface CopilotAnswer {
+  id: number; question?: string; answer: string; grounded: boolean; engine: string; warning?: string | null; missing?: string[]; follow_ups?: string[];
+  agents: { agent: string; title: string; facts: number; note: string; restricted: boolean }[]; evidence: EvidenceFact[]; created_at?: string;
+}
+export interface Draft { subject: string; body: string; engine: string; audience: PartyRole; warning?: string; based_on: string[] }
+export interface RagStatus { vector_store: "pgvector" | "local"; pgvector_error: string | null; embedder: string; semantic: boolean; dim: number; chunks: number; library_docs: number; library_stale: number }
+export interface LibraryDoc { id: number; title: string; filename: string; tags: string; size_bytes: number; chunk_count: number; created_by: string; created_at: string; stale: boolean }
+export interface LibraryHit { title: string; text: string; page: number | null; score: number; source_type: string; shipment_reference: string | null }
+export interface SerpApiShowcase { features: { engine: string; name: string; what: string; where: string; searches: number; cached: number }[]; evidence_by_kind: Record<string, number>; evidence_total: number; signals: number }

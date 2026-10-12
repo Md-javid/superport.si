@@ -1,6 +1,5 @@
 from functools import lru_cache
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -35,14 +34,15 @@ class Settings(BaseSettings):
     gemini_budget_per_shipment: int = 20
     cache_ttl_hours: int = 72
     allow_synthetic_extraction: bool | None = None  # None = auto (off in live mode)
-
-    @field_validator("allow_synthetic_extraction", mode="before")
-    @classmethod
-    def parse_optional_bool(cls, v):
-        if v == "" or v is None:
-            return None
-        return v
     collect_feedback: bool = True
+    # --- RAG / vector search / copilot ---
+    embedding_dim: int = 768  # changing it later requires dropping the rag_vectors table
+    gemini_embedding_model: str | None = None  # empty = auto-detect from your key
+    vector_store: str = "auto"  # auto | local | pgvector
+    rag_chunk_chars: int = 900
+    rag_overlap_chars: int = 150
+    rag_top_k: int = 6
+    copilot_model_kind: str = "fast"  # fast | pro
     tracking_provider: str = "sample"  # sample | none (add real providers in app/tracking/providers.py)
     # --- Trade Signal Radar ---
     radar_interval_minutes: int = 0  # 0 = scan only when someone clicks Scan now

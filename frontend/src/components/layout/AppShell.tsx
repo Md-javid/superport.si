@@ -1,6 +1,6 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
-import { Activity, FlaskConical, LayoutDashboard, LogOut, MailWarning, Menu, PackagePlus, Radar, Ship, Users, X } from "lucide-react";
+import { Activity, BookOpen, FlaskConical, LayoutDashboard, LogOut, MailWarning, Menu, PackagePlus, Radar, Search, Ship, Users, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -17,6 +17,8 @@ const NAV = [
   { href: "/shipments", label: "Shipments", icon: Ship },
   { href: "/radar", label: "Radar", icon: Radar },
   { href: "/shipments/new", label: "New shipment", icon: PackagePlus },
+  { href: "/library", label: "Library", icon: BookOpen },
+  { href: "/serpapi", label: "SerpApi", icon: Search },
   { href: "/team", label: "Team", icon: Users },
 ];
 

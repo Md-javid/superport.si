@@ -318,3 +318,68 @@ class TimelineEvent(Base):
     note: Mapped[str] = mapped_column(Text, default="")
     updated_by: Mapped[str] = mapped_column(String(120), default="")
     updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class RagChunk(Base):
+    """A searchable passage. Vectors live in rag_vectors (pgvector) or in `embedding` (local store)."""
+
+    __tablename__ = "rag_chunks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    org_id: Mapped[int] = mapped_column(Integer, index=True)  # owning organisation (shipment owner, or library owner)
+    shipment_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)  # NULL = organisation library
+    source_type: Mapped[str] = mapped_column(String(20))  # field | text | comment | knowledge
+    source_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    title: Mapped[str] = mapped_column(String(300), default="")
+    page: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    text: Mapped[str] = mapped_column(Text)
+    visibility: Mapped[str] = mapped_column(String(8), default="owner")  # owner | all
+    party_role: Mapped[str] = mapped_column(String(20), default="")  # partner role allowed to see an owner-only chunk
+    embedder: Mapped[str] = mapped_column(String(80), index=True)
+    embedding: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RagDocument(Base):
+    """An organisation library document (SOPs, regulations, rate sheets). Text is kept so it can be re-embedded."""
+
+    __tablename__ = "rag_documents"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    org_id: Mapped[int] = mapped_column(Integer, index=True)
+    title: Mapped[str] = mapped_column(String(300))
+    filename: Mapped[str] = mapped_column(String(255), default="")
+    tags: Mapped[str] = mapped_column(String(300), default="")
+    text: Mapped[str] = mapped_column(Text)
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    chunk_count: Mapped[int] = mapped_column(Integer, default=0)
+    embedder: Mapped[str] = mapped_column(String(80), default="")
+    store: Mapped[str] = mapped_column(String(20), default="")
+    created_by: Mapped[str] = mapped_column(String(120), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RagIndexState(Base):
+    __tablename__ = "rag_index_state"
+
+    shipment_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64))
+    embedder: Mapped[str] = mapped_column(String(80))
+    store: Mapped[str] = mapped_column(String(20), default="")
+    chunk_count: Mapped[int] = mapped_column(Integer, default=0)
+    indexed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class CopilotMessage(Base):
+    __tablename__ = "copilot_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    shipment_id: Mapped[int] = mapped_column(Integer, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, index=True)
+    question: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str] = mapped_column(Text)
+    evidence: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    agents: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    engine: Mapped[str] = mapped_column(String(60), default="")
+    grounded: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

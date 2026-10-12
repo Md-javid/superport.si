@@ -61,6 +61,18 @@ def main():
     step("List models for your key", list_)
     step("Tiny JSON test", lambda: gemini_client.generate_json("smoke", system="Reply with JSON only.", parts=[{"text": 'Return {"ok": true}'}], kind="fast", force=True)[0])
 
+    print("\nMilestone 7: embeddings for RAG")
+    dim = s.embedding_dim
+    step("Embedding model auto-detected", lambda: gemini_client.pick_embedding_model(models))
+
+    def emb():
+        vecs, model = gemini_client.embed(["lithium battery safety data sheet", "football results"], task="RETRIEVAL_DOCUMENT", dim=dim)
+        q, _ = gemini_client.embed(["what certificates does a battery shipment need"], task="RETRIEVAL_QUERY", dim=dim)
+        sim = lambda a, b: sum(x * y for x, y in zip(a, b)) / ((sum(x * x for x in a) ** 0.5) * (sum(y * y for y in b) ** 0.5))
+        return f"{model}, {len(vecs[0])} dimensions, battery doc {sim(q[0], vecs[0]):.2f} vs unrelated {sim(q[0], vecs[1]):.2f} (the first should be higher)"
+
+    step("Embed and compare meaning", emb)
+
     print("\nEvidence-backed HS classification")
     shipment = SimpleNamespace(id=None, product_description="Lithium-ion battery packs, 48V 100Ah, for energy storage systems", destination="India", origin="China", is_demo=False)
 

@@ -4,6 +4,7 @@ import { ArrowLeft, BellRing, CheckCircle2, Download, FileUp, MapPin, MessageSqu
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { CopilotPanel } from "@/components/shipment/CopilotPanel";
 import { StageBadge } from "@/components/shipment/StageBadge";
 import { TimelinePanel } from "@/components/shipment/TimelinePanel";
 import { Badge, type Tone } from "@/components/ui/Badge";
@@ -91,6 +92,7 @@ export default function WorkspacePage() {
 
       <div className="grid items-start gap-6 xl:grid-cols-[1.6fr_1fr]">
         <div className="space-y-6">
+          <CopilotPanel shipmentId={Number(id)} owner={owner} partnerRoles={ws.participants.filter((p) => !p.owner).map((p) => p.party_role)} />
           <TimelinePanel shipmentId={Number(id)} ws={ws} onChanged={load} />
           <Card className="p-6">
             <SectionTitle title="Document checklist" hint="Everyone sees who must provide what." />

@@ -169,3 +169,41 @@ def seed_timelines(db: Session) -> None:
         if hold_note:
             timeline.update_event(db, ship, "customs_clearance", status="delayed", planned_at=None, actual_at=None, note=hold_note, actor="Demo data")
     db.commit()
+
+
+LIBRARY = [
+    ("DEMO SOP: Importing lithium-ion batteries (fictional)", "demo-sop-lithium.txt", """Standard operating procedure: lithium-ion battery imports (fictional demo document)
+
+Before booking: confirm the cells are rechargeable lithium-ion, note the watt-hour rating, and ask the exporter for the UN 38.3 test summary and the Safety Data Sheet.
+
+Documents we always collect: commercial invoice, packing list, bill of lading, certificate of origin, UN 38.3 test summary, Safety Data Sheet and the dangerous goods declaration.
+
+Carrier rules: lithium-ion batteries ship as dangerous goods class 9 (UN3480 or UN3481). The carrier must accept the booking in writing before loading.
+
+Classification note: rechargeable lithium-ion battery packs are normally classified under heading 8507, subheading 8507.60. Primary lithium cells are different. Always confirm the chemistry on the datasheet.
+
+Escalate to the senior broker if the declared unit price is far below the usual market range or if the certificate of origin is missing at arrival."""),
+    ("DEMO SOP: Responding to a customs valuation query (fictional)", "demo-sop-valuation.txt", """Standard operating procedure: valuation queries (fictional demo document)
+
+When customs questions the declared value, do not argue the point by phone. Collect these before replying: the signed commercial invoice, proof of payment or the letter of credit, the purchase order, and any correspondence that explains an unusually low price.
+
+Reply in writing within two working days. Keep the explanation short and attach evidence. Record the query in the shipment discussion so the importer and forwarder can see it.
+
+If the price is genuinely lower than market because of volume discounts, attach the contract page that states the discount. Never edit an invoice to match a query. Escalate to the senior broker before agreeing to any revised value."""),
+]
+
+
+def seed_library(db: Session) -> None:
+    """Two fictional SOPs so the Library and the copilot can be shown without uploading anything."""
+    from app.intelligence.errors import IntelligenceError
+    from app.models import RagDocument
+    from app.rag import indexer
+
+    broker = db.query(User).filter_by(email=DEMO_EMAIL).first()
+    if not broker or db.query(RagDocument).filter_by(org_id=broker.org_id).count():
+        return
+    try:
+        for title, filename, text in LIBRARY:
+            indexer.add_library_doc(db, broker.org_id, title, filename, text.encode(), "demo,sop", "Demo data")
+    except IntelligenceError:
+        db.rollback()  # embeddings unavailable at boot: the library can be filled later
