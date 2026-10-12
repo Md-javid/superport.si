@@ -58,14 +58,14 @@ The business logic layer, independent of API transport.
 | **Serializers** | `serializers.py` | API response shaping, clearance summary generation |
 
 ### Intelligence Layer (`app/intelligence/`)
-The SerpApi + Gemini integration — the core differentiator.
+The SerpApi + Google Gemini integration — the core differentiator.
 
-- **Gemini client** — model auto-detection, vision document reading, structured JSON output
-- **SerpApi client** — Google Search, Shopping, Maps, News queries
-- **Response cache** — deduplication across identical queries (configurable TTL)
-- **Evidence pipeline** — search → rank → grounding verification → confidence adjustment
-- **Usage log** — per-shipment budget tracking and daily cap enforcement
-- **Feedback capture** — every human correction stored for future model training
+- **Gemini client (`gemini_client.py`)** — Built on the official Google GenAI SDK (`google.genai`). Strictly leverages **Gemini 3.5 Flash-Lite** via the new **Interactions API** (`client.interactions.create`) for ultra-low-latency structured reasoning, alongside multimodal document parsing (`Part.from_bytes`) and vector embedding generation (`gemini-embedding-001`).
+- **SerpApi client (`serpapi_client.py`)** — Interfaces with Google Search, Google Shopping, Google Maps, and Google News with automated JSON caching and wallet guards.
+- **Response cache (`cache.py`)** — SHA-256 deduplication across identical queries (configurable 72-hour TTL).
+- **Evidence pipeline (`evidence.py`)** — Search → rank → URL grounding verification → confidence adjustment.
+- **Usage log (`cache.py`)** — Per-shipment budget tracking and hard daily organization caps to prevent unexpected API costs.
+- **Feedback capture (`feedback.py`)** — Human edits and approvals are logged as structured dataset events for future model fine-tuning.
 
 ### Market Checks (`app/market/`)
 SerpApi-powered real-world verification (triggered by "Run checks" on the Compliance step):

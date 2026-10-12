@@ -4,7 +4,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Python](https://img.shields.io/badge/Python-3.12+-blue?style=flat-square&logo=python)](https://python.org/)
 [![SerpApi](https://img.shields.io/badge/Search%20Engine-SerpApi-blueviolet?style=flat-square)](https://serpapi.com/)
-[![Google Gemini](https://img.shields.io/badge/AI%20Engine-Google%20Gemini-4285F4?style=flat-square&logo=google)](https://aistudio.google.com/)
+[![Google Gemini](https://img.shields.io/badge/AI%20Engine-Gemini%203.5%20Flash--Lite-4285F4?style=flat-square&logo=google)](https://aistudio.google.com/)
 [![PostgreSQL + pgvector](https://img.shields.io/badge/Vector%20Store-pgvector%20%2F%20Local-336791?style=flat-square&logo=postgresql)](https://github.com/pgvector/pgvector)
 [![Tests Passing](https://img.shields.io/badge/Tests-50%20Passed-success?style=flat-square)](https://github.com/Md-javid/superport.si)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
@@ -56,9 +56,10 @@ SuperPort integrates **SerpApi** as its **Horizon Sensory Grid™**—transformi
 
 ---
 
-## 🧠 Gemini Cognitive AI & Trade Copilot
+## 🧠 Google Gemini 3.5 Flash-Lite & Trade Copilot
 
-* **Multimodal Vision Ingestion:** Reads scanned invoices, photos, and unformatted PDFs using Gemini Vision models, accurately preserving line items, gross weights, and container numbers.
+* **Official Google GenAI SDK & Interactions API:** Strictly leverages `gemini-3.5-flash-lite` through `client.interactions.create` for ultra-fast, structured intelligence, adverse news adjudication, and entity disambiguation.
+* **Multimodal Vision Ingestion:** Reads scanned invoices, photos, and unformatted PDFs using `Part.from_bytes`, accurately extracting line items, gross weights, and container numbers without hallucinating.
 * **Specialist Agent Squad:** Trade Copilot features 5 focused agents:
   1. `StatusAgent` — Workflow stage, milestones, and rule-based ETA drivers.
   2. `DocumentAgent` — RAG vector search across indexed bills of lading, invoices, and packing lists.
@@ -66,7 +67,7 @@ SuperPort integrates **SerpApi** as its **Horizon Sensory Grid™**—transformi
   4. `NewsAgent` — Correlated adverse news events and port delay signals.
   5. `DiscussionAgent` — Multi-party internal broker and partner comments.
 * **Grounded Answers with Citations:** Coordinated synthesis agent provides concise answers where every claim links to evidence cards (e.g., `[E1]`, `[E5]`). Clicking any citation opens the exact underlying document passage or news event.
-* **Vector Store & RAG:** Embeddings generated via `gemini-embedding-2` (768 dimensions) stored in **PostgreSQL + pgvector** (HNSW index, cosine distance) with automatic fallback to a local vector store for zero-friction development.
+* **Vector Store & RAG:** Embeddings generated via `gemini-embedding-001` (3072 dimensions) stored in **PostgreSQL + pgvector** (HNSW index, cosine distance) with automatic fallback to a local vector store for zero-friction development.
 * **Feedback Engine:** Every human correction to an HS code or extracted field is stored as structured training data in `feedback_events` to continuously improve accuracy.
 
 ---
