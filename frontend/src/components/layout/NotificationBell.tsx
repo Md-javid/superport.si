@@ -10,7 +10,9 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
   const [data, setData] = useState<{ unread: number; items: NotificationItem[] }>({ unread: 0, items: [] });
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
-  const load = useCallback(() => api.notifications().then(setData).catch(() => {}), []);
+  const load = useCallback(() => {
+    api.notifications().then(setData).catch(() => setData({ unread: 0, items: [] }));
+  }, []);
   useEffect(() => { load(); const t = setInterval(load, 30000); return () => clearInterval(t); }, [load]);
   useEffect(() => {
     const close = (e: MouseEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false); };
@@ -20,7 +22,12 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
   async function toggle() {
     const next = !open;
     setOpen(next);
-    if (next && data.unread) { await api.markRead(); setTimeout(load, 600); }
+    if (next && data.unread) {
+      try {
+        await api.markRead();
+      } catch {}
+      setTimeout(load, 600);
+    }
   }
   return (
     <div ref={box} className="relative">
@@ -29,7 +36,7 @@ export function NotificationBell({ dark = false }: { dark?: boolean }) {
         {data.unread > 0 && <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-signal-red px-1 text-[10px] font-bold text-white">{data.unread > 9 ? "9+" : data.unread}</span>}
       </button>
       {open && (
-        <div className="absolute bottom-full left-0 z-50 mb-2 w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-alice-200 bg-white text-ink shadow-lift lg:bottom-auto lg:left-auto lg:right-0 lg:top-full lg:mb-0 lg:mt-2">
+        <div className={`absolute z-[100] overflow-hidden rounded-2xl border border-alice-200 bg-white text-ink shadow-lift ${dark ? "bottom-full right-0 mb-3 w-[280px] sm:w-[320px]" : "right-0 top-full mt-2 w-[340px] max-w-[calc(100vw-2rem)]"}`}>
           <p className="border-b border-alice-200 px-4 py-3 font-display text-sm font-bold">Notifications</p>
           <ul className="max-h-[360px] divide-y divide-alice-200/70 overflow-y-auto">
             {data.items.length === 0 && <li className="px-4 py-8 text-center text-sm text-ink-soft">Nothing yet.</li>}

@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     # off = v1 behaviour, fixtures = sample SerpApi data (no keys), live = real APIs
     intelligence_mode: str = "off"
     gemini_api_key: str | None = None
-    gemini_model_fast: str | None = None  # empty = auto-detect from your key
-    gemini_model_pro: str | None = None
+    gemini_model_fast: str | None = "gemini-3.5-flash-lite"
+    gemini_model_pro: str | None = "gemini-3.5-flash-lite"
     serpapi_api_key: str | None = None
     serpapi_budget_per_shipment: int = 20
     serpapi_daily_cap: int = 80  # hard wallet guard across the whole app
@@ -36,8 +36,8 @@ class Settings(BaseSettings):
     allow_synthetic_extraction: bool | None = None  # None = auto (off in live mode)
     collect_feedback: bool = True
     # --- RAG / vector search / copilot ---
-    embedding_dim: int = 768  # changing it later requires dropping the rag_vectors table
-    gemini_embedding_model: str | None = None  # empty = auto-detect from your key
+    embedding_dim: int = 3072  # gemini-embedding-001 dimension
+    gemini_embedding_model: str | None = "gemini-embedding-001"
     vector_store: str = "auto"  # auto | local | pgvector
     rag_chunk_chars: int = 900
     rag_overlap_chars: int = 150

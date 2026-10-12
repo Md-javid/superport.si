@@ -90,15 +90,32 @@ def pick_models(models: list[dict]) -> tuple[str, str]:
     return fast, best("pro") or fast
 
 
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    genai = None  # type: ignore
+    types = None  # type: ignore
+
+_client = None
+
+
+def get_genai_client():
+    global _client
+    api_key = get_settings().gemini_api_key
+    if not api_key:
+        raise NotConfigured("GEMINI_API_KEY is not set.")
+    if _client is None:
+        _client = genai.Client(api_key=api_key)
+    return _client
+
+
 def resolve_model(kind: str) -> str:
     settings = get_settings()
     configured = settings.gemini_model_pro if kind == "pro" else settings.gemini_model_fast
     if configured:
         return configured
-    if not _models:
-        fast, pro = pick_models(list_models())
-        _models.update({"fast": fast, "pro": pro})
-    return _models["pro" if kind == "pro" else "fast"]
+    return "gemini-3.5-flash-lite"
 
 
 def _fingerprint(parts: list[dict]) -> list:
@@ -130,37 +147,59 @@ def generate(task: str, *, system: str, parts: list[dict], kind: str = "fast", j
     if shipment_id is not None and billable_calls("gemini", shipment_id) >= settings.gemini_budget_per_shipment:
         raise BudgetExceeded(f"Gemini call budget reached for this shipment ({settings.gemini_budget_per_shipment}).")
 
-    body: dict = {"contents": [{"role": "user", "parts": parts}], "generationConfig": {"maxOutputTokens": max_tokens}}
-    if json_mode:
-        body["generationConfig"]["responseMimeType"] = "application/json"
-    if system:
-        body["systemInstruction"] = {"parts": [{"text": system}]}
+    client = get_genai_client()
+    has_inline = any("inline_data" in p for p in parts)
+    text = ""
+    tokens_in = 0
+    tokens_out = 0
 
     try:
-        with httpx.Client(transport=_transport, timeout=90) as client:
-            response = client.post(f"{BASE}/models/{model}:generateContent", headers=_headers(), json=body)
-    except httpx.HTTPError as exc:
-        log_usage("gemini", task, shipment_id, ok=False, detail=type(exc).__name__)
-        raise UpstreamError("Could not reach the Gemini API.") from exc
-    try:
-        _fail(response, model)
-    except UpstreamError as exc:
+        if not has_inline:
+            # Strictly use the Interactions API with gemini-3.5-flash-lite
+            input_text = "\n\n".join(p.get("text", "") for p in parts if "text" in p)
+            if json_mode and "json" not in input_text.lower():
+                input_text += "\n\nImportant: Output a single valid JSON object."
+
+            interaction = client.interactions.create(
+                model=model,
+                input=input_text,
+                system_instruction=system or None,
+            )
+            text = interaction.output_text or ""
+            if interaction.usage:
+                tokens_in = getattr(interaction.usage, "total_input_tokens", 0) or 0
+                tokens_out = getattr(interaction.usage, "total_output_tokens", 0) or 0
+        else:
+            # Multimodal via models.generate_content
+            content_parts = []
+            for p in parts:
+                if "inline_data" in p:
+                    b64_data = p["inline_data"]["data"]
+                    raw_bytes = base64.b64decode(b64_data)
+                    mime_type = p["inline_data"]["mime_type"]
+                    content_parts.append(types.Part.from_bytes(data=raw_bytes, mime_type=mime_type))
+                elif "text" in p:
+                    content_parts.append(p["text"])
+
+            config = types.GenerateContentConfig(
+                system_instruction=system or None,
+                response_mime_type="application/json" if json_mode else None,
+                max_output_tokens=max_tokens,
+            )
+            res = client.models.generate_content(
+                model=model,
+                contents=content_parts,
+                config=config,
+            )
+            text = res.text or ""
+            if res.usage_metadata:
+                tokens_in = getattr(res.usage_metadata, "prompt_token_count", 0) or 0
+                tokens_out = getattr(res.usage_metadata, "candidates_token_count", 0) or 0
+    except Exception as exc:
         log_usage("gemini", task, shipment_id, ok=False, detail=str(exc))
-        raise
+        raise UpstreamError(f"Gemini error: {exc}") from exc
 
-    data = response.json()
-    candidates = data.get("candidates") or []
-    if not candidates:
-        reason = (data.get("promptFeedback") or {}).get("blockReason", "no candidates returned")
-        log_usage("gemini", task, shipment_id, ok=False, detail=f"blocked: {reason}")
-        raise UpstreamError(f"Gemini returned no answer ({reason}).")
-    candidate = candidates[0]
-    text = "".join(p.get("text", "") for p in (candidate.get("content") or {}).get("parts", []) if not p.get("thought"))
-    if candidate.get("finishReason") == "MAX_TOKENS" and not text.strip():
-        log_usage("gemini", task, shipment_id, ok=False, detail="max tokens")
-        raise UpstreamError("Gemini ran out of output tokens before answering.")
-    usage = data.get("usageMetadata") or {}
-    result = {"text": text, "model": model, "tokens_in": int(usage.get("promptTokenCount", 0)), "tokens_out": int(usage.get("candidatesTokenCount", 0))}
+    result = {"text": text, "model": model, "tokens_in": int(tokens_in), "tokens_out": int(tokens_out)}
     cache_put("gemini", ckey, {"task": task, "model": model}, result)
     log_usage("gemini", task, shipment_id, tokens_in=result["tokens_in"], tokens_out=result["tokens_out"])
     return {**result, "cached": False}
@@ -203,9 +242,7 @@ def resolve_embedding_model() -> str:
     configured = get_settings().gemini_embedding_model
     if configured:
         return configured
-    if "m" not in _embed_model:
-        _embed_model["m"] = pick_embedding_model(list_models())
-    return _embed_model["m"]
+    return "gemini-embedding-001"
 
 
 def embed(texts: list[str], *, task: str, dim: int) -> tuple[list[list[float]], str]:
@@ -213,29 +250,20 @@ def embed(texts: list[str], *, task: str, dim: int) -> tuple[list[list[float]], 
     if not gemini_ready():
         raise NotConfigured("Gemini is not configured (needs INTELLIGENCE_MODE=live and GEMINI_API_KEY).")
     model = resolve_embedding_model()
+    client = get_genai_client()
     out: list[list[float]] = []
     for i in range(0, len(texts), 100):
         batch = texts[i : i + 100]
-        reqs = [{"model": f"models/{model}", "content": {"parts": [{"text": t}]}, "taskType": task, "outputDimensionality": dim} for t in batch]
         try:
-            with httpx.Client(transport=_transport, timeout=60) as client:
-                response = client.post(f"{BASE}/models/{model}:batchEmbedContents", headers=_headers(), json={"requests": reqs})
-                if response.status_code == 400 and "outputdimensionality" in response.text.lower():
-                    for r in reqs:
-                        r.pop("outputDimensionality", None)
-                    response = client.post(f"{BASE}/models/{model}:batchEmbedContents", headers=_headers(), json={"requests": reqs})
-        except httpx.HTTPError as exc:
-            log_usage("gemini", "embed", None, ok=False, detail=type(exc).__name__)
-            raise UpstreamError("Could not reach the Gemini API.") from exc
-        try:
-            _fail(response, model)
-        except UpstreamError as exc:
+            res = client.models.embed_content(
+                model=model,
+                contents=batch,
+            )
+            vectors = [e.values for e in res.embeddings]
+        except Exception as exc:
             log_usage("gemini", "embed", None, ok=False, detail=str(exc))
-            raise
-        vectors = [e.get("values", []) for e in response.json().get("embeddings", [])]
-        if len(vectors) != len(batch) or any(len(v) != dim for v in vectors):
-            got = len(vectors[0]) if vectors else 0
-            raise UpstreamError(f"Embedding size {got} does not match EMBEDDING_DIM={dim}. Set EMBEDDING_DIM to {got or dim}, or use a model that supports {dim} dimensions.")
+            raise UpstreamError(f"Gemini embedding error: {exc}") from exc
         out += vectors
         log_usage("gemini", "embed", None)
     return out, model
+
