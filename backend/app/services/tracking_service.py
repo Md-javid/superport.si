@@ -15,7 +15,7 @@ def summary(shipment: Shipment) -> dict:
         connected, name, sample = provider.name != "none", provider.name, provider.sample
     except TrackingNotConfigured:
         connected, name, sample = False, "none", False
-    reason = check["reason"] + (" Demo shipments use fictional numbers." if (shipment.is_demo and not check["valid"]) else "")
+    reason = check["reason"]
     return {"connected": connected, "provider": name, "sample": sample, "fetched_at": t.get("fetched_at"), "status": t.get("status"), "location": t.get("location"), "vessel": t.get("vessel"),
             "voyage": t.get("voyage"), "eta": t.get("eta"), "events": t.get("events", []), "container": {"number": check["normalized"] or shipment.container_number, "valid": check["valid"], "reason": reason},
             "search_url": "https://www.google.com/search?q=" + (check["normalized"] or shipment.container_number) + "+container+tracking"}

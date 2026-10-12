@@ -38,7 +38,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [busy, setBusy] = useState<"form" | "demo" | null>(null);
+  const [busy, setBusy] = useState<"form" | "quick" | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -60,9 +60,9 @@ export default function LoginPage() {
     }
   }
 
-  async function onDemo(persona = "broker") {
+  async function onQuickLogin(persona = "broker") {
     setError("");
-    setBusy("demo");
+    setBusy("quick");
     try {
       await demoLogin(persona);
       router.replace("/dashboard");
@@ -149,11 +149,11 @@ export default function LoginPage() {
             <Button variant="secondary" onClick={() => notConfigured("Apple")}><AppleIcon /> Apple</Button>
           </div>
 
-          <button onClick={() => onDemo()} disabled={busy !== null} className="group mt-4 flex w-full items-center justify-between rounded-2xl border border-port/25 bg-port-50/70 px-4 py-3.5 text-left transition hover:border-port hover:shadow-glow disabled:opacity-60">
+          <button onClick={() => onQuickLogin()} disabled={busy !== null} className="group mt-4 flex w-full items-center justify-between rounded-2xl border border-port/25 bg-port-50/70 px-4 py-3.5 text-left transition hover:border-port hover:shadow-glow disabled:opacity-60">
             <span className="flex items-center gap-3">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-port text-white"><Sparkles className="h-4 w-4" /></span>
               <span>
-                <span className="block text-sm font-bold text-prussian">{busy === "demo" ? "Opening workspace..." : "Explore as Customs Broker"}</span>
+                <span className="block text-sm font-bold text-prussian">{busy === "quick" ? "Opening workspace..." : "Explore as Customs Broker"}</span>
                 <span className="block text-xs text-ink-soft">Pre-configured workspace with trade shipments</span>
               </span>
             </span>
@@ -162,8 +162,8 @@ export default function LoginPage() {
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm">
             <span className="text-ink-faint">See it as a partner:</span>
-            <button onClick={() => onDemo("forwarder")} className="font-semibold text-port hover:text-port-600">Freight forwarder</button>
-            <button onClick={() => onDemo("importer")} className="font-semibold text-port hover:text-port-600">Importer</button>
+            <button onClick={() => onQuickLogin("forwarder")} className="font-semibold text-port hover:text-port-600">Freight forwarder</button>
+            <button onClick={() => onQuickLogin("importer")} className="font-semibold text-port hover:text-port-600">Importer</button>
           </div>
           <p className="mt-5 text-center text-sm text-ink-soft">New to SuperPort? <Link href="/register" className="font-semibold text-port">Create an account</Link></p>
           <p className="mt-6 text-center text-xs leading-relaxed text-ink-faint">

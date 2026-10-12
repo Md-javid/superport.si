@@ -52,7 +52,7 @@ export function HsStep({ shipment, onChange, onDecided, closed }: { shipment: Sh
       {hs.fallback_reason && (
         <div className="flex gap-3 rounded-2xl border border-signal-amber/30 bg-signal-amber/[.07] p-4 text-sm text-[#7A2E0E]"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p>{hs.fallback_reason} Showing rule-based classification.</p></div>
       )}
-      {hs.engine.startsWith("demo-rules") && !hs.fallback_reason && (
+      {hs.engine.includes("rules") && !hs.fallback_reason && (
         <div className="flex gap-3 rounded-2xl border border-alice-200 bg-white p-4 text-sm text-ink-soft"><Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-port" /><p>Rule-based classification active. Connect live intelligence for real-time web telemetry and official tariff gazette verification.</p></div>
       )}
       {hs.grounded === "none" && hs.engine.startsWith("gemini") && (

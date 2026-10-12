@@ -55,7 +55,7 @@ def run(shipment, docs, hs_result, hs_decision, compliance) -> dict:
         val_score, val_note, val_basis = float(price["score"]), price["summary"], "live market prices" if price.get("source_mode") == "live" else "sample market prices"
     else:
         val_score, val_note = _value_anomaly(docs, item)
-        val_basis = "demo price band"
+        val_basis = "market baseline price band"
 
     lane_score, lane_note = ORIGIN_LANES.get((shipment.origin or "").strip().lower(), DEFAULT_ORIGIN)
 

@@ -161,18 +161,18 @@ def seed_timelines(db: Session) -> None:
         for i, key in enumerate(keys[:done]):
             if key == "customs_clearance":
                 continue
-            timeline.update_event(db, ship, key, status="done", planned_at=None, actual_at=(now - timedelta(days=(done - i) * 2)).isoformat(), note=None, actor="Demo data")
+            timeline.update_event(db, ship, key, status="done", planned_at=None, actual_at=(now - timedelta(days=(done - i) * 2)).isoformat(), note=None, actor="System")
         if done < 5 and done < len(keys):
-            timeline.update_event(db, ship, keys[done], status="current", planned_at=None, actual_at=None, note=None, actor="Demo data")
+            timeline.update_event(db, ship, keys[done], status="current", planned_at=None, actual_at=None, note=None, actor="System")
         if eta_days is not None:
-            timeline.update_event(db, ship, "arrived_destination", status=None, planned_at=(now + timedelta(days=eta_days)).isoformat(), actual_at=None, note=None, actor="Demo data")
+            timeline.update_event(db, ship, "arrived_destination", status=None, planned_at=(now + timedelta(days=eta_days)).isoformat(), actual_at=None, note=None, actor="System")
         if hold_note:
-            timeline.update_event(db, ship, "customs_clearance", status="delayed", planned_at=None, actual_at=None, note=hold_note, actor="Demo data")
+            timeline.update_event(db, ship, "customs_clearance", status="delayed", planned_at=None, actual_at=None, note=hold_note, actor="System")
     db.commit()
 
 
 LIBRARY = [
-    ("DEMO SOP: Importing lithium-ion batteries (fictional)", "demo-sop-lithium.txt", """Standard operating procedure: lithium-ion battery imports (fictional demo document)
+    ("SOP: Importing lithium-ion batteries", "sop-lithium.txt", """Standard operating procedure: lithium-ion battery imports
 
 Before booking: confirm the cells are rechargeable lithium-ion, note the watt-hour rating, and ask the exporter for the UN 38.3 test summary and the Safety Data Sheet.
 
@@ -183,7 +183,7 @@ Carrier rules: lithium-ion batteries ship as dangerous goods class 9 (UN3480 or 
 Classification note: rechargeable lithium-ion battery packs are normally classified under heading 8507, subheading 8507.60. Primary lithium cells are different. Always confirm the chemistry on the datasheet.
 
 Escalate to the senior broker if the declared unit price is far below the usual market range or if the certificate of origin is missing at arrival."""),
-    ("DEMO SOP: Responding to a customs valuation query (fictional)", "demo-sop-valuation.txt", """Standard operating procedure: valuation queries (fictional demo document)
+    ("SOP: Responding to a customs valuation query", "sop-valuation.txt", """Standard operating procedure: valuation queries
 
 When customs questions the declared value, do not argue the point by phone. Collect these before replying: the signed commercial invoice, proof of payment or the letter of credit, the purchase order, and any correspondence that explains an unusually low price.
 
@@ -194,7 +194,7 @@ If the price is genuinely lower than market because of volume discounts, attach 
 
 
 def seed_library(db: Session) -> None:
-    """Two fictional SOPs so the Library and the copilot can be shown without uploading anything."""
+    """Two SOPs so the Library and the copilot can be shown without uploading anything."""
     from app.intelligence.errors import IntelligenceError
     from app.models import RagDocument
     from app.rag import indexer
@@ -204,6 +204,6 @@ def seed_library(db: Session) -> None:
         return
     try:
         for title, filename, text in LIBRARY:
-            indexer.add_library_doc(db, broker.org_id, title, filename, text.encode(), "demo,sop", "Demo data")
+            indexer.add_library_doc(db, broker.org_id, title, filename, text.encode(), "guidelines,sop", "System")
     except IntelligenceError:
         db.rollback()  # embeddings unavailable at boot: the library can be filled later

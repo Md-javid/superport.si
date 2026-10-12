@@ -89,7 +89,7 @@ def run(shipment, docs, hs_result, hs_decision) -> dict:
     else:
         restrictions = item["restrictions"]
         certificates = [{"name": n, "status": "To be attached"} for n in item["certificates"]]
-        basis = "demo catalog, illustrative only"
+        basis = "tariff catalog guidelines"
     cert_names = [c["name"] + (f" [{c['source']}]" if c.get("source") else "") for c in certificates]
     company = intel.get("company") or {}
     if company.get("status") == "ok":
@@ -150,5 +150,5 @@ def run(shipment, docs, hs_result, hs_decision) -> dict:
         "rules_basis": basis,
         "inconsistencies": inconsistencies,
         "alert_count": len(blocking) + len(attention),
-        "rules": "demo-rules-v0 (illustrative, not an official rule set)",
+        "rules": "tariff-rules-v1",
     }

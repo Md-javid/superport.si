@@ -69,7 +69,7 @@ def recommend_rules(shipment, docs) -> dict:
         "alternatives": alternatives,
         "rationale": rationale,
         "item_key": item["key"],
-        "engine": "demo-rules-v0" if not llm.configured else f"{llm.name}+rules",
+        "engine": "rules-v1" if not llm.configured else f"{llm.name}+rules",
         "sources": [],
         "sources_mode": "none",
         "grounded": "none",
@@ -94,5 +94,5 @@ def recommend(shipment, docs, force: bool = False) -> dict:
             return rules
     if mode() == "fixtures" and enabled_for(shipment):
         sources, source_mode, notes = hs_ranker.fetch_sources(shipment, shipment.product_description)
-        rules.update({"sources": sources, "sources_mode": source_mode, "source_notes": notes, "engine": "demo-rules-v0+sample-evidence"})
+        rules.update({"sources": sources, "sources_mode": source_mode, "source_notes": notes, "engine": "rules-v1+sample-evidence"})
     return rules

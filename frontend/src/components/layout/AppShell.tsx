@@ -40,16 +40,6 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         ))}
       </nav>
       <div className="relative space-y-3 p-4">
-        <div className="glass rounded-2xl p-3.5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-white">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-            </span>
-            Horizon Telemetry Active
-          </div>
-          <p className="mt-1 text-xs leading-snug text-white/70">Live Web Grounding & Gemini Engine online</p>
-        </div>
         <div className="flex items-center gap-3 rounded-2xl bg-white/5 p-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-port to-port-300 text-sm font-bold">
             {user?.name.split(" ").map((p) => p[0]).slice(0, 2).join("")}
@@ -73,7 +63,7 @@ function VerifyBanner() {
     setBusy(true);
     try {
       const r = await api.resendVerification();
-      if (r.dev_link) window.location.href = r.dev_link; // demo mode: no inbox, so open the link directly
+      if (r.dev_link) window.location.href = r.dev_link;
       else toast("Verification email sent. Check your inbox.", "success");
     } catch (e) { toast(e instanceof Error ? e.message : "Could not send the email.", "error"); } finally { setBusy(false); }
   }

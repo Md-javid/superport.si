@@ -111,7 +111,7 @@ export function ExtractionStep({ shipment, onChange, onConfirmed, closed }: { sh
   const [tab, setTab] = useState(0);
   const [busy, setBusy] = useState(false);
   const doc = ready[Math.min(tab, ready.length - 1)];
-  const demoGenerated = ready.some((d) => d.fields.some((f) => f.source === "demo-synthesized"));
+  const hasEstimatedFields = ready.some((d) => d.fields.some((f) => f.source === "demo-synthesized"));
   const canConfirm = shipment.stage === "extraction_review";
   const lowCount = ready.reduce((n, d) => n + d.fields.filter((f) => f.value && f.confidence < 0.85).length, 0);
 
@@ -150,7 +150,7 @@ export function ExtractionStep({ shipment, onChange, onConfirmed, closed }: { sh
           <p>Some documents were read by Gemini. Confidence is capped below 100% and values missing from the file&apos;s own text are marked lower. Please check the numbers.</p>
         </div>
       )}
-      {demoGenerated && (
+      {hasEstimatedFields && (
         <div className="flex gap-3 rounded-2xl border border-signal-amber/30 bg-signal-amber/[.07] p-4 text-sm text-[#7A2E0E]">
           <Info className="mt-0.5 h-4 w-4 shrink-0" />
           <p>Some values were estimated because the uploaded file had unreadable sections. Verify line items before confirming.</p>
