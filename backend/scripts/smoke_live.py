@@ -22,8 +22,11 @@ from app.services import hs_code  # noqa: E402
 ok = True
 
 
+import time
+
 def step(name, fn):
     global ok
+    time.sleep(1.5)
     try:
         out = fn()
         print(f"  PASS  {name}" + (f"  ->  {out}" if out else ""))
@@ -104,7 +107,7 @@ def main():
     step("Rules lookup (Google Search + Gemini)", rules)
 
     print("\nMilestone 4: Trade Signal Radar")
-    watch = {"ports": ["Chennai Port"], "countries": {"India", "China"}, "products": ["Lithium-ion battery packs"], "product_words": {"battery", "lithium"}}
+    watch = {"ports": ["Chennai Port"], "countries": {"India", "China"}, "products": ["Lithium-ion battery packs"], "product_words": {"battery", "lithium"}, "carriers": {"maersk", "msc"}}
     arts = []
 
     def news():

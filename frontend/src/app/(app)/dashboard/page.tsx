@@ -169,11 +169,11 @@ export default function DashboardPage() {
               <div className="mt-4 flex flex-wrap gap-2">
                 <Badge tone={data.intelligence.mode === "live" ? "green" : data.intelligence.mode === "fixtures" ? "amber" : "gray"} dot>Mode: {data.intelligence.mode}</Badge>
                 <Badge tone={data.intelligence.gemini.configured ? "green" : "gray"}>Gemini {data.intelligence.gemini.configured ? "key set" : "no key"}</Badge>
-                <Badge tone={data.intelligence.serpapi.configured ? "green" : "gray"}>SerpApi {data.intelligence.serpapi.configured ? "key set" : "no key"}</Badge>
+                <Badge tone={data.intelligence.serpapi.configured ? "green" : "gray"}>Horizon Grid {data.intelligence.serpapi.configured ? "online" : "offline"}</Badge>
               </div>
               {data.intelligence.mode === "live" && (
                 <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-xl bg-alice/70 p-3"><dt className="text-ink-faint">Searches (30 days)</dt><dd className="font-display text-lg font-bold text-ink">{data.intelligence.usage_30d.serpapi.live_calls}<span className="ml-1 text-xs font-medium text-ink-faint">+{data.intelligence.usage_30d.serpapi.cache_hits} cached</span></dd></div>
+                  <div className="rounded-xl bg-alice/70 p-3"><dt className="text-ink-faint">Grid Telemetry (30 days)</dt><dd className="font-display text-lg font-bold text-ink">{data.intelligence.usage_30d.serpapi.live_calls}<span className="ml-1 text-xs font-medium text-ink-faint">+{data.intelligence.usage_30d.serpapi.cache_hits} cached</span></dd></div>
                   <div className="rounded-xl bg-alice/70 p-3"><dt className="text-ink-faint">Gemini calls</dt><dd className="font-display text-lg font-bold text-ink">{data.intelligence.usage_30d.gemini.live_calls}<span className="ml-1 text-xs font-medium text-ink-faint">+{data.intelligence.usage_30d.gemini.cache_hits} cached</span></dd></div>
                 </dl>
               )}

@@ -18,7 +18,7 @@ const NAV = [
   { href: "/radar", label: "Radar", icon: Radar },
   { href: "/shipments/new", label: "New shipment", icon: PackagePlus },
   { href: "/library", label: "Library", icon: BookOpen },
-  { href: "/serpapi", label: "SerpApi", icon: Search },
+  { href: "/serpapi", label: "Horizon Grid", icon: Search },
   { href: "/team", label: "Team", icon: Users },
 ];
 

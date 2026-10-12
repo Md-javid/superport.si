@@ -21,8 +21,8 @@ HIGH_WORDS = ("closed", "closure", "shutdown", "cyclone", "typhoon", "hurricane"
 
 def gemini_events(articles: list[dict], watch: dict) -> tuple[list[dict], str]:
     listing = "\n".join(f"[{i}] {a['title']} ({a['source']}, {a['date']}): {a['snippet']}" for i, a in enumerate(articles, 1))
-    prompt = (f"WATCHED PORTS: {', '.join(watch['ports']) or 'none'}\nWATCHED COUNTRIES: {', '.join(sorted(watch['countries'])) or 'none'}\n"
-              f"WATCHED PRODUCTS: {', '.join(watch['products']) or 'none'}\nWATCHED CARRIERS: {', '.join(sorted(watch['carriers'])) or 'none'}\n\nARTICLES\n{listing}\n\n"
+    prompt = (f"WATCHED PORTS: {', '.join(watch.get('ports', [])) or 'none'}\nWATCHED COUNTRIES: {', '.join(sorted(watch.get('countries', []))) or 'none'}\n"
+              f"WATCHED PRODUCTS: {', '.join(watch.get('products', [])) or 'none'}\nWATCHED CARRIERS: {', '.join(sorted(watch.get('carriers', []))) or 'none'}\n\nARTICLES\n{listing}\n\n"
               'Return JSON: {"events":[{"title":"short headline","event_type":"strike|congestion|weather|tariff_change|regulation|closure|carrier|geopolitical|other",'
               '"summary":"one or two plain sentences","severity":"low|medium|high","ports":["port names"],"countries":["country names"],"products":["product names"],"carriers":["shipping line names"],"articles":[article numbers]}]}\n'
               "Every event must list the article numbers that report it. Use at most 10 events.")
@@ -50,10 +50,10 @@ def heuristic_events(articles: list[dict], watch: dict) -> tuple[list[dict], str
         etype = next((t for t, words in KEYWORDS.items() if any(w in text for w in words)), None)
         if not etype:
             continue
-        ports = tuple(p for p in watch["ports"] if p.lower() in text)
-        countries = tuple(sorted(c for c in watch["countries"] if c.lower() in text))
-        products = tuple(sorted(w for w in watch["product_words"] if w in text))
-        carriers = tuple(sorted(c for c in watch["carriers"] if c in text))
+        ports = tuple(p for p in watch.get("ports", []) if p.lower() in text)
+        countries = tuple(sorted(c for c in watch.get("countries", []) if c.lower() in text))
+        products = tuple(sorted(w for w in watch.get("product_words", []) if w in text))
+        carriers = tuple(sorted(c for c in watch.get("carriers", []) if c in text))
         if not (ports or countries or products or carriers):
             continue
         key = (etype, ports, countries, carriers)
