@@ -213,10 +213,8 @@ npm run build
 
 ---
 
-## 📄 Documentation Index
+## 📄 Documentation
 
-- [Submission Pitch & Demo Kit](SUBMISSION.md) — 20-second pitch, demo script, and Judge Q&A.
-- [Architecture Deep Dive](ARCHITECTURE.md) — Module architecture, database schemas, and data pipelines.
+- [Architecture Reference](ARCHITECTURE.md) — Module architecture, database schemas, and data pipelines.
 - [Quick Start Guide](QUICKSTART.md) — Step-by-step local developer setup instructions.
-- [Contributing](CONTRIBUTING.md) — Coding conventions, testing guidelines, and PR workflow.
 - [License](LICENSE) — MIT License.
