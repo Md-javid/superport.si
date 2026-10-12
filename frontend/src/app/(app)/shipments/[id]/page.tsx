@@ -85,7 +85,6 @@ export default function ShipmentPage() {
               <h1 className="font-display text-3xl font-extrabold text-prussian">{shipment.reference}</h1>
               <StageBadge stage={shipment.stage} label={shipment.stage_label} />
               <RiskBadge level={shipment.risk_level} score={shipment.risk_score} />
-              {shipment.is_demo && <Badge tone="amber">Demo shipment: simulated AI</Badge>}
             </div>
             <p className="mt-1.5 max-w-2xl text-[15px] text-ink-soft">{shipment.product_description}</p>
             <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5 text-sm text-ink-soft">
