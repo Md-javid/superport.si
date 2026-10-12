@@ -165,7 +165,7 @@ export default function WorkspacePage() {
                 <div className="flex gap-2"><select className="field-input !py-2" value={inv.role} onChange={(e) => setInv({ ...inv, role: e.target.value as PartyRole })} aria-label="Partner role">{ROLES.map((r) => <option key={r} value={r}>{PARTY_LABEL[r]}</option>)}</select>
                   <Button type="submit" size="sm" loading={inviting} disabled={!ws.can_invite || !inv.email}>Invite</Button></div>
                 {!ws.can_invite && <p className="text-xs text-[#B54708]">Confirm your email address first (see the banner at the top).</p>}
-                {inviteLink && <p className="rounded-xl bg-signal-amber/10 px-3 py-2 text-xs text-[#7A2E0E]">Demo mode shows the link instead of sending email: <a className="break-all font-semibold underline" href={inviteLink}>{inviteLink}</a></p>}
+                {inviteLink && <p className="rounded-xl bg-signal-amber/10 px-3 py-2 text-xs text-[#7A2E0E]">Direct partner invitation link: <a className="break-all font-semibold underline" href={inviteLink}>{inviteLink}</a></p>}
               </form>
             )}
           </Card>

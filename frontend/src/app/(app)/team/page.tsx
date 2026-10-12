@@ -40,7 +40,7 @@ export default function TeamPage() {
           <input className="field-input min-w-[240px] flex-1" type="email" placeholder="colleague@company.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!data.can_invite} aria-label="Teammate email" />
           <Button type="submit" loading={busy} disabled={!data.can_invite || !email}><MailCheck className="h-4 w-4" /> Send invitation</Button>
         </form>
-        {link && <p className="mt-3 rounded-xl bg-signal-amber/10 px-3.5 py-2.5 text-sm text-[#7A2E0E]">Demo mode shows the link instead of sending email: <a className="break-all font-semibold underline" href={link}>{link}</a></p>}
+        {link && <p className="mt-3 rounded-xl bg-signal-amber/10 px-3.5 py-2.5 text-sm text-[#7A2E0E]">Direct activation link: <a className="break-all font-semibold underline" href={link}>{link}</a></p>}
         {data.invitations.length > 0 && <div className="mt-5"><p className="text-sm font-semibold text-ink-soft">Pending</p><ul className="mt-2 space-y-1">{data.invitations.map((i) => <li key={i.id} className="text-sm text-ink">{i.email}</li>)}</ul></div>}
       </Card>
     </div>

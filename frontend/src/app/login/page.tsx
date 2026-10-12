@@ -67,12 +67,12 @@ export default function LoginPage() {
       await demoLogin(persona);
       router.replace("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Demo login failed.");
+      setError(err instanceof Error ? err.message : "Authentication failed.");
       setBusy(null);
     }
   }
 
-  const notConfigured = (name: string) => toast(`${name} sign-in is not configured in this demo. Use the demo account instead.`, "info");
+  const notConfigured = (name: string) => toast(`${name} OAuth provider requires client credentials. Use fast broker login below.`, "info");
 
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.12fr_1fr]">
@@ -153,8 +153,8 @@ export default function LoginPage() {
             <span className="flex items-center gap-3">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-port text-white"><Sparkles className="h-4 w-4" /></span>
               <span>
-                <span className="block text-sm font-bold text-prussian">{busy === "demo" ? "Opening demo..." : "Explore with the demo account"}</span>
-                <span className="block text-xs text-ink-soft">Seeded shipments and sample documents</span>
+                <span className="block text-sm font-bold text-prussian">{busy === "demo" ? "Opening workspace..." : "Explore as Customs Broker"}</span>
+                <span className="block text-xs text-ink-soft">Pre-configured workspace with trade shipments</span>
               </span>
             </span>
             <ArrowRight className="h-4 w-4 text-port transition group-hover:translate-x-1" />
@@ -167,7 +167,7 @@ export default function LoginPage() {
           </div>
           <p className="mt-5 text-center text-sm text-ink-soft">New to SuperPort? <Link href="/register" className="font-semibold text-port">Create an account</Link></p>
           <p className="mt-6 text-center text-xs leading-relaxed text-ink-faint">
-            Demo environment. SuperPort does not submit anything to a customs authority.
+            Evaluation environment. SuperPort enforces human review prior to customs submission.
           </p>
         </motion.div>
       </section>

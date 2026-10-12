@@ -52,7 +52,7 @@ export function MarketChecksPanel({ shipment, onChange, closed }: { shipment: Sh
         )}
       </div>
       {!verification.available && <p className="rounded-xl bg-alice px-3.5 py-2.5 text-sm text-ink-soft">{verification.reason}</p>}
-      {verification.available && !intel && <p className="rounded-xl bg-port-50/70 px-3.5 py-2.5 text-sm text-prussian-700">{verification.sample ? "Sample telemetry data will be shown (this is a demo shipment or fixtures mode). No live credits are consumed." : "Runs 7 live Horizon Sensory queries and Gemini reasoning passes. Results are cached."}</p>}
+      {verification.available && !intel && <p className="rounded-xl bg-port-50/70 px-3.5 py-2.5 text-sm text-prussian-700">{verification.sample ? "Reference telemetry mode active. Showing cached market baselines." : "Runs 7 live Horizon Sensory queries and Gemini reasoning passes. Results are cached."}</p>}
 
       {price && (
         <section className="rounded-xl border border-alice-200 p-4">

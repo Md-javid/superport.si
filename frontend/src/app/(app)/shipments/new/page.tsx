@@ -112,7 +112,7 @@ export default function NewShipmentPage() {
             <Sparkles className="relative h-6 w-6 text-port-200" />
             <h3 className="relative mt-3 font-display text-lg font-bold">Try it with a ready example</h3>
             <p className="relative mt-1.5 text-sm leading-relaxed text-white/75">Fills in a lithium-ion battery shipment that matches the sample documents you can use on the next step.</p>
-            <Button variant="light" size="sm" className="relative mt-4" onClick={() => { setForm(DEMO); setErrors({}); toast("Demo shipment loaded.", "info"); }}>Load demo shipment</Button>
+            <Button variant="light" size="sm" className="relative mt-4" onClick={() => { setForm(DEMO); setErrors({}); toast("Sample shipment loaded.", "info"); }}>Load sample shipment</Button>
           </div>
           <Card className="p-6">
             <h3 className="text-base font-bold text-ink">What happens next</h3>

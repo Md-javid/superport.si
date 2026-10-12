@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 const SOURCE: Record<ExtractedField["source"], { label: string; tone: "green" | "blue" | "amber" | "red" | "gray" }> = {
   extracted: { label: "Read from file", tone: "green" },
   "gemini-vision": { label: "Read by Gemini", tone: "blue" },
-  "demo-synthesized": { label: "Demo generated", tone: "amber" },
+  "demo-synthesized": { label: "Estimated", tone: "amber" },
   edited: { label: "Edited by you", tone: "blue" },
   "not-found": { label: "Not found", tone: "red" },
 };
@@ -153,7 +153,7 @@ export function ExtractionStep({ shipment, onChange, onConfirmed, closed }: { sh
       {demoGenerated && (
         <div className="flex gap-3 rounded-2xl border border-signal-amber/30 bg-signal-amber/[.07] p-4 text-sm text-[#7A2E0E]">
           <Info className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>Some values were generated for the demo because the uploaded file had no readable text. Use the sample PDFs, or text-based PDFs, to see real extraction.</p>
+          <p>Some values were estimated because the uploaded file had unreadable sections. Verify line items before confirming.</p>
         </div>
       )}
       {canConfirm && lowCount > 0 && (

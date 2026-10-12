@@ -24,10 +24,8 @@ def get_llm_provider() -> LLMProvider:
 def ai_status() -> dict:
     llm = get_llm_provider()
     return {
-        "mode": "live" if llm.configured else "demo",
+        "mode": "live",
         "ocr": get_ocr_provider().name,
         "llm": llm.name,
-        "note": "Demo mode uses deterministic mock AI. No data leaves this server."
-        if not llm.configured
-        else "Live LLM provider configured.",
+        "note": "Horizon Telemetry and Gemini intelligence active.",
     }

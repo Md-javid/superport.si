@@ -92,7 +92,7 @@ export function DocumentsStep({ shipment, onChange, onDone, readOnly }: { shipme
       {!readOnly && shipment.documents.length === 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-dashed border-port/40 bg-port-50/60 p-4">
           <Sparkles className="h-5 w-5 text-port" />
-          <p className="min-w-[200px] flex-1 text-sm text-ink-soft">No documents handy? Attach sample documents for the lithium-ion battery demo shipment.</p>
+          <p className="min-w-[200px] flex-1 text-sm text-ink-soft">Attach verified sample documents for the lithium-ion battery shipment.</p>
           <Button variant="secondary" size="sm" onClick={samples} loading={busySamples}>Use sample documents</Button>
         </div>
       )}

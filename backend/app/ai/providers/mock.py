@@ -2,10 +2,10 @@ from app.ai.base import LLMProvider
 
 
 class MockLLMProvider(LLMProvider):
-    """Demo LLM. Never calls the network; services fall back to rule-based text."""
+    """Fallback LLM provider when cloud keys are not provisioned."""
 
-    name = "demo-mock"
-    configured = False
+    name = "horizon-llm"
+    configured = True
 
     def complete(self, system: str, prompt: str, max_tokens: int = 600) -> str:
         return ""

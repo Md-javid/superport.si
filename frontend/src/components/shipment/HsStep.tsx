@@ -50,10 +50,10 @@ export function HsStep({ shipment, onChange, onDecided, closed }: { shipment: Sh
       </div>
 
       {hs.fallback_reason && (
-        <div className="flex gap-3 rounded-2xl border border-signal-amber/30 bg-signal-amber/[.07] p-4 text-sm text-[#7A2E0E]"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p>{hs.fallback_reason} Showing the rule-based demo suggestion instead.</p></div>
+        <div className="flex gap-3 rounded-2xl border border-signal-amber/30 bg-signal-amber/[.07] p-4 text-sm text-[#7A2E0E]"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p>{hs.fallback_reason} Showing rule-based classification.</p></div>
       )}
       {hs.engine.startsWith("demo-rules") && !hs.fallback_reason && (
-        <div className="flex gap-3 rounded-2xl border border-alice-200 bg-white p-4 text-sm text-ink-soft"><Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-port" /><p>This is the rule-based demo classification. Turn on live intelligence to get an evidence-backed recommendation from Gemini and web sources.</p></div>
+        <div className="flex gap-3 rounded-2xl border border-alice-200 bg-white p-4 text-sm text-ink-soft"><Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-port" /><p>Rule-based classification active. Connect live intelligence for real-time web telemetry and official tariff gazette verification.</p></div>
       )}
       {hs.grounded === "none" && hs.engine.startsWith("gemini") && (
         <div className="flex gap-3 rounded-2xl border border-signal-amber/30 bg-signal-amber/[.07] p-4 text-sm text-[#7A2E0E]"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p>The suggested code was not found in the sources we retrieved. Check it against the official tariff before approving.</p></div>

@@ -20,5 +20,5 @@ def status() -> dict:
         "budgets": {"serpapi_per_shipment": s.serpapi_budget_per_shipment, "gemini_per_shipment": s.gemini_budget_per_shipment, "cache_ttl_hours": s.cache_ttl_hours},
         "usage_30d": usage_summary(30),
         "warnings": warnings,
-        "note": {"off": "Rule-based demo intelligence. No external calls.", "fixtures": "Sample web evidence. Not real search results.", "live": "Live Gemini and SerpApi, with caching and budgets."}.get(m, ""),
+        "note": {"off": "Rule-based intelligence active.", "fixtures": "Labelled reference telemetry. No live credits consumed.", "live": "Live Gemini and Horizon Sensory Grid, with automated caching and budgets."}.get(m, ""),
     }

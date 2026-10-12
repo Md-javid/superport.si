@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
       {done ? (
         <div className="space-y-4">
           <p className="rounded-xl bg-signal-green/10 px-4 py-3 text-sm font-medium text-[#05603A]">{done.message}</p>
-          {done.dev_link && <p className="rounded-xl bg-signal-amber/10 px-4 py-3 text-sm text-[#7A2E0E]">Demo mode shows the link here instead of an inbox: <a className="font-semibold underline" href={done.dev_link}>open the reset link</a></p>}
+          {done.dev_link && <p className="rounded-xl bg-signal-amber/10 px-4 py-3 text-sm text-[#7A2E0E]">Direct password reset link: <a className="font-semibold underline" href={done.dev_link}>open the reset link</a></p>}
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-4" noValidate>
