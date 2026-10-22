@@ -9,6 +9,7 @@ import { OceanScene } from "@/components/brand/OceanScene";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/lib/auth";
+import { getApiBase, setCustomApiUrl } from "@/lib/api";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
@@ -40,6 +41,27 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [busy, setBusy] = useState<"form" | "quick" | null>(null);
   const [error, setError] = useState("");
+  const [customUrl, setCustomUrl] = useState("");
+  const [showConfig, setShowConfig] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCustomUrl(window.localStorage.getItem("superport.api_url") || "");
+    }
+  }, []);
+
+  function onConnectBackend() {
+    const trimmed = customUrl.trim();
+    if (!trimmed) {
+      setCustomApiUrl("");
+      toast("Reset backend URL to default proxy", "info");
+    } else {
+      setCustomApiUrl(trimmed);
+      toast("API URL saved. Ready to sign in!", "success");
+      setError("");
+    }
+    setShowConfig(false);
+  }
 
   useEffect(() => {
     if (!loading && user) router.replace("/dashboard");
@@ -134,7 +156,33 @@ export default function LoginPage() {
               </label>
               <Link href="/forgot-password" className="font-semibold text-port hover:text-port-600">Forgot password?</Link>
             </div>
-            {error && <p role="alert" className="rounded-xl bg-signal-red/8 px-3.5 py-2.5 text-sm font-medium text-[#B42318] ring-1 ring-signal-red/20">{error}</p>}
+            {error && (
+              <div className="space-y-3">
+                <p role="alert" className="rounded-xl bg-signal-red/8 px-3.5 py-2.5 text-sm font-medium text-[#B42318] ring-1 ring-signal-red/20">{error}</p>
+                {(error.toLowerCase().includes("backend") || error.toLowerCase().includes("cannot reach") || error.includes("404") || showConfig) && (
+                  <div className="rounded-2xl border border-port/25 bg-white/95 p-4 text-xs shadow-subtle backdrop-blur">
+                    <p className="font-bold text-prussian">Connect Live Render Backend</p>
+                    <p className="mt-1 text-ink-soft">Paste your deployed Render URL (e.g. <code className="font-mono text-port">https://your-api.onrender.com</code>) to connect immediately:</p>
+                    <div className="mt-2.5 flex gap-2">
+                      <input
+                        type="url"
+                        placeholder="https://your-backend.onrender.com"
+                        value={customUrl}
+                        onChange={(e) => setCustomUrl(e.target.value)}
+                        className="flex-1 rounded-xl border border-alice-300 bg-white px-3 py-2 text-xs text-ink placeholder:text-ink-faint focus:border-port focus:outline-none focus:ring-1 focus:ring-port"
+                      />
+                      <button
+                        type="button"
+                        onClick={onConnectBackend}
+                        className="rounded-xl bg-port px-3.5 py-2 text-xs font-bold text-white transition hover:bg-port-600 active:scale-95"
+                      >
+                        Connect
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <Button type="submit" size="lg" className="w-full" loading={busy === "form"}>
               Continue <ArrowRight className="h-4 w-4" />
             </Button>
@@ -165,6 +213,37 @@ export default function LoginPage() {
             <button onClick={() => onQuickLogin("forwarder")} className="font-semibold text-port hover:text-port-600">Freight forwarder</button>
             <button onClick={() => onQuickLogin("importer")} className="font-semibold text-port hover:text-port-600">Importer</button>
           </div>
+          <div className="mt-3 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowConfig((s) => !s)}
+              className="text-xs text-ink-faint hover:text-port transition"
+            >
+              {showConfig ? "Hide backend settings" : "⚙️ Change API Server URL"}
+            </button>
+          </div>
+          {showConfig && !error && (
+            <div className="mt-2 rounded-2xl border border-port/25 bg-white/95 p-4 text-xs shadow-subtle backdrop-blur">
+              <p className="font-bold text-prussian">Live Backend URL</p>
+              <p className="mt-1 text-ink-soft">Current endpoint: <code className="font-mono text-port">{getApiBase()}</code></p>
+              <div className="mt-2.5 flex gap-2">
+                <input
+                  type="url"
+                  placeholder="https://your-backend.onrender.com"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  className="flex-1 rounded-xl border border-alice-300 bg-white px-3 py-2 text-xs text-ink placeholder:text-ink-faint focus:border-port focus:outline-none focus:ring-1 focus:ring-port"
+                />
+                <button
+                  type="button"
+                  onClick={onConnectBackend}
+                  className="rounded-xl bg-port px-3.5 py-2 text-xs font-bold text-white transition hover:bg-port-600 active:scale-95"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          )}
           <p className="mt-5 text-center text-sm text-ink-soft">New to SuperPort? <Link href="/register" className="font-semibold text-port">Create an account</Link></p>
           <p className="mt-6 text-center text-xs leading-relaxed text-ink-faint">
             Evaluation environment. SuperPort enforces human review prior to customs submission.

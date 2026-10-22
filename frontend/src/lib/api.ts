@@ -21,21 +21,55 @@ export class ApiError extends Error {
   }
 }
 
-const configuredApi = process.env.NEXT_PUBLIC_API_URL;
-export const API_BASE = configuredApi
-  ? (configuredApi.endsWith("/api") ? configuredApi : `${configuredApi.replace(/\/+$/, "")}/api`)
-  : (typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:8000/api" : "/api");
+export function getApiBase(): string {
+  if (typeof window !== "undefined") {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramUrl = urlParams.get("api_url");
+    if (paramUrl) {
+      const clean = paramUrl.trim().replace(/\/+$/, "");
+      window.localStorage.setItem("superport.api_url", clean);
+      return clean.endsWith("/api") ? clean : `${clean}/api`;
+    }
+    const saved = window.localStorage.getItem("superport.api_url");
+    if (saved) {
+      const clean = saved.trim().replace(/\/+$/, "");
+      return clean.endsWith("/api") ? clean : `${clean}/api`;
+    }
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://localhost:8000/api";
+    }
+  }
+  const configuredApi = process.env.NEXT_PUBLIC_API_URL;
+  if (configuredApi) {
+    const clean = configuredApi.trim().replace(/\/+$/, "");
+    return clean.endsWith("/api") ? clean : `${clean}/api`;
+  }
+  return "/api";
+}
+
+export function setCustomApiUrl(url: string) {
+  if (typeof window !== "undefined") {
+    if (!url) {
+      window.localStorage.removeItem("superport.api_url");
+    } else {
+      window.localStorage.setItem("superport.api_url", url.trim().replace(/\/+$/, ""));
+    }
+  }
+}
+
+export const API_BASE = "/api";
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   const token = tokenStore.get();
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (init.body && !(init.body instanceof FormData)) headers.set("Content-Type", "application/json");
+  const base = getApiBase();
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+    res = await fetch(`${base}${path}`, { ...init, headers });
   } catch {
-    throw new ApiError("Cannot reach the SuperPort API. Check that the backend is running on port 8000.", 0);
+    throw new ApiError(`Cannot reach the SuperPort API at ${base}. Check that the backend server is awake.`, 0);
   }
   if (!res.ok) {
     let message = "Something went wrong. Try again.";
@@ -44,6 +78,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       if (typeof body.detail === "string") message = body.detail;
       else if (Array.isArray(body.detail)) message = body.detail.map((d: { loc?: string[]; msg: string }) => `${d.loc?.slice(-1)[0] ?? "field"}: ${d.msg}`).join(". ");
     } catch {}
+    if (res.status === 404 && base === "/api") {
+      message = "Backend API route not found. Make sure NEXT_PUBLIC_API_URL or BACKEND_URL is set in your Vercel project settings, or connect your backend URL below.";
+    }
     if (res.status === 401 && !path.startsWith("/auth/login") && typeof window !== "undefined") {
       tokenStore.clear();
       window.location.href = "/login";
@@ -102,7 +139,7 @@ export const api = {
   serpapiShowcase: () => request<SerpApiShowcase>("/intelligence/serpapi"),
   remind: (id: number, itemId: number) => post<{ notified: number }>(`/shipments/${id}/checklist/${itemId}/remind`),
   downloadChecklist: async (id: number, itemId: number, filename: string) => {
-    const res = await fetch(`${API_BASE}/shipments/${id}/checklist/${itemId}/file`, { headers: { Authorization: `Bearer ${tokenStore.get() ?? ""}` } });
+    const res = await fetch(`${getApiBase()}/shipments/${id}/checklist/${itemId}/file`, { headers: { Authorization: `Bearer ${tokenStore.get() ?? ""}` } });
     if (!res.ok) throw new ApiError("Could not download the file.", res.status);
     const url = URL.createObjectURL(await res.blob());
     const a = document.createElement("a");
