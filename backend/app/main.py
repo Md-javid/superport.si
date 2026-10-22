@@ -41,12 +41,15 @@ async def lifespan(app: FastAPI):
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[o.strip() for o in settings.cors_origins.split(",")],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+cors_list = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+cors_kwargs = {
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+}
+if "*" in cors_list or settings.cors_origins == "*":
+    app.add_middleware(CORSMiddleware, allow_origin_regex=r"https?://.*", **cors_kwargs)
+else:
+    app.add_middleware(CORSMiddleware, allow_origins=cors_list, allow_origin_regex=r"https://.*\.vercel\.app", **cors_kwargs)
 for router in (auth.router, shipments.router, workspace.router, tracking.router, copilot.router, orgs.router, market.router, radar.router, radar.shipment_router, dashboard.router, intelligence.router, misc.router):
     app.include_router(router, prefix="/api")

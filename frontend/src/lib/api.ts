@@ -21,7 +21,10 @@ export class ApiError extends Error {
   }
 }
 
-export const API_BASE = typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:8000/api" : "/api";
+const configuredApi = process.env.NEXT_PUBLIC_API_URL;
+export const API_BASE = configuredApi
+  ? (configuredApi.endsWith("/api") ? configuredApi : `${configuredApi.replace(/\/+$/, "")}/api`)
+  : (typeof window !== "undefined" && window.location.hostname === "localhost" ? "http://localhost:8000/api" : "/api");
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);

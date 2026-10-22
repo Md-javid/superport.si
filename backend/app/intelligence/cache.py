@@ -36,9 +36,13 @@ def cache_put(provider: str, key: str, request: dict, response: dict) -> None:
 
 
 def log_usage(provider: str, kind: str, shipment_id: int | None, *, cached: bool = False, ok: bool = True, tokens_in: int = 0, tokens_out: int = 0, detail: str = "") -> None:
-    with SessionLocal() as db:
-        db.add(ApiUsage(provider=provider, kind=kind, shipment_id=shipment_id, cached=cached, ok=ok, tokens_in=tokens_in, tokens_out=tokens_out, detail=detail[:500]))
-        db.commit()
+    try:
+        with SessionLocal() as db:
+            db.add(ApiUsage(provider=provider, kind=kind, shipment_id=shipment_id, cached=cached, ok=ok, tokens_in=tokens_in, tokens_out=tokens_out, detail=detail[:500]))
+            db.commit()
+    except Exception:
+        # Logging usage should never crash application startup or RAG indexing
+        pass
 
 
 def billable_calls(provider: str, shipment_id: int) -> int:

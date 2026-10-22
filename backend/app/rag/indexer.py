@@ -106,6 +106,7 @@ def index_library_doc(db: Session, doc: RagDocument) -> int:
     if chunks:
         store.add(db, chunks, vectors, embedder.name)
     doc.chunk_count, doc.embedder, doc.store = len(chunks), embedder.name, store.name
+    db.commit()
     return len(chunks)
 
 
@@ -113,9 +114,8 @@ def add_library_doc(db: Session, org_id: int, title: str, filename: str, data: b
     pages = extract_pages(filename, data)
     doc = RagDocument(org_id=org_id, title=title.strip()[:300] or filename, filename=filename, tags=tags[:300], text="\n\n".join(pages), size_bytes=len(data), created_by=user_name)
     db.add(doc)
-    db.flush()
-    index_library_doc(db, doc)
     db.commit()
+    index_library_doc(db, doc)
     return doc
 
 

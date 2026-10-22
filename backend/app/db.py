@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -10,11 +10,24 @@ settings = get_settings()
 
 _kwargs: dict = {}
 if settings.database_url.startswith("sqlite"):
-    _kwargs["connect_args"] = {"check_same_thread": False}
+    _kwargs["connect_args"] = {"check_same_thread": False, "timeout": 30}
     if ":memory:" in settings.database_url:
         _kwargs["poolclass"] = StaticPool
 
 engine = create_engine(settings.database_url, pool_pre_ping=True, **_kwargs)
+
+if settings.database_url.startswith("sqlite"):
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        try:
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA busy_timeout=30000")
+        except Exception:
+            pass
+        finally:
+            cursor.close()
+
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 

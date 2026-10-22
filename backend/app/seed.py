@@ -205,5 +205,7 @@ def seed_library(db: Session) -> None:
     try:
         for title, filename, text in LIBRARY:
             indexer.add_library_doc(db, broker.org_id, title, filename, text.encode(), "guidelines,sop", "System")
-    except IntelligenceError:
-        db.rollback()  # embeddings unavailable at boot: the library can be filled later
+    except Exception as e:
+        db.rollback()  # embeddings unavailable or deferred at boot: the library can be filled later
+        import logging
+        logging.getLogger(__name__).warning("seed_library deferred: %s", e)
