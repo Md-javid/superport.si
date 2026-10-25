@@ -7,6 +7,7 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string, remember: boolean) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
   demoLogin: (persona?: string) => Promise<void>;
   signUp: (body: Parameters<typeof api.register>[0]) => Promise<Awaited<ReturnType<typeof api.register>>>;
   refresh: () => Promise<void>;
@@ -31,6 +32,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokenStore.set(res.token, remember);
     setUser(res.user);
   }, []);
+  const googleLogin = useCallback(async (credential: string) => {
+    const res = await api.googleLogin(credential);
+    tokenStore.set(res.token, true);
+    setUser(res.user);
+  }, []);
   const demoLogin = useCallback(async (persona = "broker") => {
     const res = await api.demoLogin(persona);
     tokenStore.set(res.token, false);
@@ -51,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = "/login";
   }, []);
 
-  return <Ctx.Provider value={{ user, loading, login, demoLogin, signUp, refresh, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, loading, login, googleLogin, demoLogin, signUp, refresh, logout }}>{children}</Ctx.Provider>;
 }
 
 export function useAuth() {

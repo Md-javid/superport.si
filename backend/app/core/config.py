@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     resend_api_key: str | None = None
     email_from: str | None = None  # for example SuperPort <no-reply@yourdomain.com>
     database_url: str = "sqlite:///./superport.db"
+    google_client_id: str | None = None
     secret_key: str = "dev-only-change-me-use-a-long-random-secret"
     access_token_minutes: int = 60 * 12
     demo_mode: bool = True

@@ -57,6 +57,24 @@ export function setCustomApiUrl(url: string) {
   }
 }
 
+export function getGoogleClientId(): string {
+  if (typeof window !== "undefined") {
+    const saved = window.localStorage.getItem("superport.google_client_id");
+    if (saved && saved.trim()) return saved.trim();
+  }
+  return process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+}
+
+export function setGoogleClientId(clientId: string) {
+  if (typeof window !== "undefined") {
+    if (!clientId.trim()) {
+      window.localStorage.removeItem("superport.google_client_id");
+    } else {
+      window.localStorage.setItem("superport.google_client_id", clientId.trim());
+    }
+  }
+}
+
 export const API_BASE = "/api";
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -94,6 +112,7 @@ const post = <T,>(path: string, body?: unknown) => request<T>(path, { method: "P
 
 export const api = {
   login: (email: string, password: string, remember: boolean) => post<{ token: string; user: User }>("/auth/login", { email, password, remember }),
+  googleLogin: (credential: string) => post<{ token: string; user: User }>("/auth/google", { credential }),
   demoLogin: (persona = "broker") => post<{ token: string; user: User }>(`/auth/demo?persona=${persona}`),
   register: (body: { org_name: string; org_type: PartyRole; name: string; email: string; password: string; invite_token?: string }) =>
     post<{ token: string; user: User; dev_link: string | null; joined_shipment_id: number | null }>("/auth/register", body),

@@ -1,7 +1,9 @@
 import hashlib
 import re
+import secrets
 from typing import Literal
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
@@ -59,6 +61,71 @@ def demo_login(persona: str = "broker", db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(404, "Demo user has not been seeded.")
     return {"token": create_access_token(user.id), "user": user_out(user)}
+
+
+class GoogleLoginIn(BaseModel):
+    credential: str
+
+
+@router.post("/google")
+def google_login(body: GoogleLoginIn, request: Request, db: Session = Depends(get_db)):
+    ratelimit.check(f"google_login:{_ip(request)}", 30)
+    credential = body.credential.strip()
+    if not credential:
+        raise HTTPException(400, "Google credential token is missing.")
+
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            resp = client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={credential}")
+    except Exception as e:
+        raise HTTPException(502, f"Failed to contact Google identity servers: {e}")
+
+    if resp.status_code != 200:
+        raise HTTPException(401, "Google token is invalid or expired.")
+
+    data = resp.json()
+    email = data.get("email")
+    if not email:
+        raise HTTPException(400, "Google account does not provide an email address.")
+
+    email = email.lower()
+    email_verified = data.get("email_verified") in [True, "true", "True", 1]
+    name = data.get("name") or data.get("given_name") or email.split("@")[0]
+
+    settings = get_settings()
+    if settings.google_client_id:
+        aud = data.get("aud")
+        azp = data.get("azp")
+        if aud != settings.google_client_id and azp != settings.google_client_id:
+            raise HTTPException(401, "Google token audience mismatch.")
+
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        org_name = f"{name}'s Team"
+        org = Organization(name=org_name, type="broker")
+        db.add(org)
+        db.flush()
+
+        random_pw = secrets.token_urlsafe(32)
+        user = User(
+            email=email,
+            name=name,
+            role="Customs Broker",
+            company=org.name,
+            password_hash=hash_password(random_pw),
+            org_id=org.id,
+            org_role="admin",
+            email_verified=email_verified,
+        )
+        db.add(user)
+        db.flush()
+        db.commit()
+    else:
+        if email_verified and not user.email_verified:
+            user.email_verified = True
+            db.commit()
+
+    return {"token": create_access_token(user.id, True), "user": user_out(user)}
 
 
 class RegisterIn(BaseModel):
