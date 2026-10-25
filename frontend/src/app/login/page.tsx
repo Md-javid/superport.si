@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { ArrowRight, Check, Eye, EyeOff, FileCheck2, KeyRound, Lock, Mail, ShieldCheck, Sparkles, UserCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, FileCheck2, Lock, Mail, ShieldCheck, Sparkles, UserCheck } from "lucide-react";
 import Link from "next/link";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
@@ -10,7 +10,7 @@ import { OceanScene } from "@/components/brand/OceanScene";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/lib/auth";
-import { getApiBase, getGoogleClientId, setCustomApiUrl, setGoogleClientId } from "@/lib/api";
+import { getGoogleClientId } from "@/lib/api";
 
 declare global {
   interface Window {
@@ -68,23 +68,15 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [busy, setBusy] = useState<"form" | "quick" | "google" | null>(null);
   const [error, setError] = useState("");
-  const [customUrl, setCustomUrl] = useState("");
-  const [showConfig, setShowConfig] = useState(false);
 
-  // Real Google Sign-In state
-  const [googleClientId, setGoogleClientIdState] = useState("");
-  const [googleClientIdInput, setGoogleClientIdInput] = useState("");
-  const [showGoogleConfig, setShowGoogleConfig] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState("");
   const [gsiReady, setGsiReady] = useState(false);
+  const [gsiButtonMounted, setGsiButtonMounted] = useState(false);
   const googleBtnRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setCustomUrl(window.localStorage.getItem("superport.api_url") || "");
-      const cid = getGoogleClientId();
-      setGoogleClientIdState(cid);
-      setGoogleClientIdInput(cid);
-    }
+    const cid = getGoogleClientId();
+    setGoogleClientId(cid);
   }, []);
 
   const initGoogle = useCallback(() => {
@@ -122,6 +114,7 @@ export default function LoginPage() {
           shape: "rectangular",
           logo_alignment: "center",
         });
+        setGsiButtonMounted(true);
       }
     } catch (err) {
       console.warn("Failed to initialize Google Sign-In:", err);
@@ -133,33 +126,6 @@ export default function LoginPage() {
       initGoogle();
     }
   }, [googleClientId, gsiReady, initGoogle]);
-
-  function onConnectBackend() {
-    const trimmed = customUrl.trim();
-    if (!trimmed) {
-      setCustomApiUrl("");
-      toast("Reset backend URL to default proxy", "info");
-    } else {
-      setCustomApiUrl(trimmed);
-      toast("API URL saved. Ready to sign in!", "success");
-      setError("");
-    }
-    setShowConfig(false);
-  }
-
-  function onSaveGoogleClientId() {
-    const trimmed = googleClientIdInput.trim();
-    setGoogleClientId(trimmed);
-    setGoogleClientIdState(trimmed);
-    if (trimmed) {
-      toast("Google Client ID saved. Initializing Google Sign-In...", "success");
-      setShowGoogleConfig(false);
-      setTimeout(() => initGoogle(), 120);
-    } else {
-      toast("Google Client ID cleared.", "info");
-      if (googleBtnRef.current) googleBtnRef.current.innerHTML = "";
-    }
-  }
 
   useEffect(() => {
     if (!loading && user) router.replace("/dashboard");
@@ -177,6 +143,14 @@ export default function LoginPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed.");
       setBusy(null);
+    }
+  }
+
+  function handleGoogleFallbackClick() {
+    if (googleClientId && window.google?.accounts?.id) {
+      window.google.accounts.id.prompt();
+    } else {
+      toast("Google OAuth is being configured. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in your environment.", "info");
     }
   }
 
@@ -207,7 +181,12 @@ export default function LoginPage() {
         <section className="relative isolate flex min-h-[420px] flex-col justify-between overflow-hidden p-8 text-white lg:min-h-screen lg:p-14">
           <OceanScene />
           <Logo dark />
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }} className="relative z-10 my-12 max-w-xl lg:my-0">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-10 my-12 max-w-xl lg:my-0"
+          >
             <div className="glass mb-6 inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium text-white/90">
               <Sparkles className="h-4 w-4 text-port-300" /> AI customs copilot
             </div>
@@ -220,7 +199,13 @@ export default function LoginPage() {
           </motion.div>
           <div className="relative z-10 hidden gap-3 lg:grid lg:grid-cols-3">
             {TRUST.map((t, i) => (
-              <motion.div key={t.title} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.12, duration: 0.7 }} className="glass rounded-2xl p-4">
+              <motion.div
+                key={t.title}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 + i * 0.12, duration: 0.7 }}
+                className="glass rounded-2xl p-4"
+              >
                 <t.icon className="mb-3 h-5 w-5 text-port-300" />
                 <p className="text-sm font-semibold">{t.title}</p>
                 <p className="mt-1 text-[13px] leading-snug text-white/65">{t.text}</p>
@@ -232,7 +217,12 @@ export default function LoginPage() {
         {/* Form side */}
         <section className="relative flex items-center justify-center bg-gradient-to-b from-white via-alice to-alice-100 px-6 py-12">
           <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 rounded-full bg-port/10 blur-[90px]" />
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }} className="relative w-full max-w-[420px]">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="relative w-full max-w-[420px]"
+          >
             <h2 className="font-display text-3xl font-bold text-prussian">Welcome back</h2>
             <p className="mt-2 text-ink-soft">Sign in to continue to your shipments.</p>
 
@@ -241,52 +231,56 @@ export default function LoginPage() {
                 <span className="field-label">Work email</span>
                 <div className="relative">
                   <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
-                  <input className="field-input pl-10" type="email" autoComplete="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <input
+                    className="field-input pl-10"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
                 </div>
               </label>
               <label className="block">
                 <span className="field-label">Password</span>
                 <div className="relative">
                   <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
-                  <input className="field-input px-10" type={show ? "text" : "password"} autoComplete="current-password" placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                  <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? "Hide password" : "Show password"} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-faint hover:text-port">
+                  <input
+                    className="field-input px-10"
+                    type={show ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShow((s) => !s)}
+                    aria-label={show ? "Hide password" : "Show password"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-faint hover:text-port"
+                  >
                     {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </label>
               <div className="flex items-center justify-between text-sm">
                 <label className="flex cursor-pointer items-center gap-2 text-ink-soft">
-                  <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 rounded border-alice-200 accent-port" />
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                    className="h-4 w-4 rounded border-alice-200 accent-port"
+                  />
                   Remember me
                 </label>
-                <Link href="/forgot-password" className="font-semibold text-port hover:text-port-600">Forgot password?</Link>
+                <Link href="/forgot-password" className="font-semibold text-port hover:text-port-600">
+                  Forgot password?
+                </Link>
               </div>
               {error && (
-                <div className="space-y-3">
-                  <p role="alert" className="rounded-xl bg-signal-red/8 px-3.5 py-2.5 text-sm font-medium text-[#B42318] ring-1 ring-signal-red/20">{error}</p>
-                  {(error.toLowerCase().includes("backend") || error.toLowerCase().includes("cannot reach") || error.includes("404") || showConfig) && (
-                    <div className="rounded-2xl border border-port/25 bg-white/95 p-4 text-xs shadow-subtle backdrop-blur">
-                      <p className="font-bold text-prussian">Connect Live Render Backend</p>
-                      <p className="mt-1 text-ink-soft">Paste your deployed Render URL (e.g. <code className="font-mono text-port">https://your-api.onrender.com</code>) to connect immediately:</p>
-                      <div className="mt-2.5 flex gap-2">
-                        <input
-                          type="url"
-                          placeholder="https://your-backend.onrender.com"
-                          value={customUrl}
-                          onChange={(e) => setCustomUrl(e.target.value)}
-                          className="flex-1 rounded-xl border border-alice-300 bg-white px-3 py-2 text-xs text-ink placeholder:text-ink-faint focus:border-port focus:outline-none focus:ring-1 focus:ring-port"
-                        />
-                        <button
-                          type="button"
-                          onClick={onConnectBackend}
-                          className="rounded-xl bg-port px-3.5 py-2 text-xs font-bold text-white transition hover:bg-port-600 active:scale-95"
-                        >
-                          Connect
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <p role="alert" className="rounded-xl bg-signal-red/8 px-3.5 py-2.5 text-sm font-medium text-[#B42318] ring-1 ring-signal-red/20">
+                  {error}
+                </p>
               )}
               <Button type="submit" size="lg" className="w-full" loading={busy === "form"}>
                 Continue <ArrowRight className="h-4 w-4" />
@@ -297,104 +291,40 @@ export default function LoginPage() {
               <span className="h-px flex-1 bg-alice-200" /> or <span className="h-px flex-1 bg-alice-200" />
             </div>
 
-            {/* Real Google Login Section */}
+            {/* Real Google Sign-In */}
             <div className="w-full">
-              {googleClientId ? (
-                <div className="flex flex-col items-center gap-2">
-                  <div
-                    ref={googleBtnRef}
-                    className={`min-h-[44px] w-full flex justify-center transition ${busy === "google" ? "opacity-50 pointer-events-none" : ""}`}
-                  />
-                  {busy === "google" && (
-                    <p className="text-xs font-semibold text-port animate-pulse flex items-center gap-1.5">
-                      <Sparkles className="h-3.5 w-3.5 animate-spin" /> Verifying Google Account...
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 pt-1 text-[11px] text-ink-faint">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    <span>Google OAuth ready</span>
-                    <span>&bull;</span>
-                    <button
-                      type="button"
-                      onClick={() => setShowGoogleConfig((s) => !s)}
-                      className="text-ink-faint hover:text-port transition underline"
-                    >
-                      {showGoogleConfig ? "Hide Client ID" : "Config"}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowGoogleConfig((s) => !s)}
-                    disabled={busy !== null}
-                    className="flex w-full items-center justify-center gap-3 rounded-xl border border-alice-300 bg-white px-4 py-3 text-sm font-semibold text-prussian shadow-subtle transition hover:bg-alice-50 hover:border-port/40 active:scale-[0.99] disabled:opacity-60"
-                  >
-                    <GoogleIcon />
-                    <span>Continue with Google</span>
-                  </button>
-                  <p className="text-center text-[11px] text-ink-faint">
-                    Google OAuth client credentials required.{" "}
-                    <button
-                      type="button"
-                      onClick={() => setShowGoogleConfig((s) => !s)}
-                      className="font-medium text-port hover:underline"
-                    >
-                      {showGoogleConfig ? "Close setup" : "Set Client ID"}
-                    </button>
-                  </p>
-                </div>
+              {googleClientId && (
+                <div
+                  ref={googleBtnRef}
+                  className={`min-h-[44px] w-full flex justify-center transition ${!gsiButtonMounted ? "hidden" : ""} ${busy === "google" ? "opacity-50 pointer-events-none" : ""}`}
+                />
               )}
-
-              {/* Google Client ID Setup Drawer */}
-              {showGoogleConfig && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-3 rounded-2xl border border-port/25 bg-white/95 p-4 text-xs shadow-subtle backdrop-blur"
+              {(!googleClientId || !gsiButtonMounted) && (
+                <button
+                  type="button"
+                  onClick={handleGoogleFallbackClick}
+                  disabled={busy !== null}
+                  className="flex w-full items-center justify-center gap-3 rounded-xl border border-alice-300 bg-white px-4 py-3 text-sm font-semibold text-prussian shadow-subtle transition hover:bg-alice-50 hover:border-port/40 active:scale-[0.99] disabled:opacity-60"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-prussian flex items-center gap-1.5">
-                      <KeyRound className="h-3.5 w-3.5 text-port" /> Google OAuth 2.0 Web Client
-                    </span>
-                    {googleClientId && (
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-600/20">
-                        Active
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-ink-soft">
-                    Paste your Google OAuth Client ID (from Google Cloud Console &rarr; APIs &amp; Services &rarr; Credentials):
-                  </p>
-                  <div className="mt-2.5 flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="123456789-xxx.apps.googleusercontent.com"
-                      value={googleClientIdInput}
-                      onChange={(e) => setGoogleClientIdInput(e.target.value)}
-                      className="flex-1 rounded-xl border border-alice-300 bg-white px-3 py-2 text-xs font-mono text-ink placeholder:text-ink-faint focus:border-port focus:outline-none focus:ring-1 focus:ring-port"
-                    />
-                    <button
-                      type="button"
-                      onClick={onSaveGoogleClientId}
-                      className="rounded-xl bg-port px-3.5 py-2 text-xs font-bold text-white transition hover:bg-port-600 active:scale-95 flex items-center gap-1"
-                    >
-                      <Check className="h-3.5 w-3.5" /> Save
-                    </button>
-                  </div>
-                  <p className="mt-2 text-[10px] text-ink-faint leading-tight">
-                    Tip: Set <code className="font-mono text-port font-semibold">NEXT_PUBLIC_GOOGLE_CLIENT_ID</code> in environment variables or enter it above.
-                  </p>
-                </motion.div>
+                  <GoogleIcon />
+                  <span>{busy === "google" ? "Signing in with Google..." : "Continue with Google"}</span>
+                </button>
               )}
             </div>
 
-            <button onClick={() => onQuickLogin()} disabled={busy !== null} className="group mt-4 flex w-full items-center justify-between rounded-2xl border border-port/25 bg-port-50/70 px-4 py-3.5 text-left transition hover:border-port hover:shadow-glow disabled:opacity-60">
+            <button
+              onClick={() => onQuickLogin()}
+              disabled={busy !== null}
+              className="group mt-4 flex w-full items-center justify-between rounded-2xl border border-port/25 bg-port-50/70 px-4 py-3.5 text-left transition hover:border-port hover:shadow-glow disabled:opacity-60"
+            >
               <span className="flex items-center gap-3">
-                <span className="grid h-9 w-9 place-items-center rounded-xl bg-port text-white"><Sparkles className="h-4 w-4" /></span>
+                <span className="grid h-9 w-9 place-items-center rounded-xl bg-port text-white">
+                  <Sparkles className="h-4 w-4" />
+                </span>
                 <span>
-                  <span className="block text-sm font-bold text-prussian">{busy === "quick" ? "Opening workspace..." : "Explore as Customs Broker"}</span>
+                  <span className="block text-sm font-bold text-prussian">
+                    {busy === "quick" ? "Opening workspace..." : "Explore as Customs Broker"}
+                  </span>
                   <span className="block text-xs text-ink-soft">Pre-configured workspace with trade shipments</span>
                 </span>
               </span>
@@ -403,41 +333,20 @@ export default function LoginPage() {
 
             <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm">
               <span className="text-ink-faint">See it as a partner:</span>
-              <button onClick={() => onQuickLogin("forwarder")} className="font-semibold text-port hover:text-port-600">Freight forwarder</button>
-              <button onClick={() => onQuickLogin("importer")} className="font-semibold text-port hover:text-port-600">Importer</button>
-            </div>
-            <div className="mt-3 flex justify-center">
-              <button
-                type="button"
-                onClick={() => setShowConfig((s) => !s)}
-                className="text-xs text-ink-faint hover:text-port transition"
-              >
-                {showConfig ? "Hide backend settings" : "⚙️ Change API Server URL"}
+              <button onClick={() => onQuickLogin("forwarder")} className="font-semibold text-port hover:text-port-600">
+                Freight forwarder
+              </button>
+              <button onClick={() => onQuickLogin("importer")} className="font-semibold text-port hover:text-port-600">
+                Importer
               </button>
             </div>
-            {showConfig && !error && (
-              <div className="mt-2 rounded-2xl border border-port/25 bg-white/95 p-4 text-xs shadow-subtle backdrop-blur">
-                <p className="font-bold text-prussian">Live Backend URL</p>
-                <p className="mt-1 text-ink-soft">Current endpoint: <code className="font-mono text-port">{getApiBase()}</code></p>
-                <div className="mt-2.5 flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="https://your-backend.onrender.com"
-                    value={customUrl}
-                    onChange={(e) => setCustomUrl(e.target.value)}
-                    className="flex-1 rounded-xl border border-alice-300 bg-white px-3 py-2 text-xs text-ink placeholder:text-ink-faint focus:border-port focus:outline-none focus:ring-1 focus:ring-port"
-                  />
-                  <button
-                    type="button"
-                    onClick={onConnectBackend}
-                    className="rounded-xl bg-port px-3.5 py-2 text-xs font-bold text-white transition hover:bg-port-600 active:scale-95"
-                  >
-                    Save
-                  </button>
-                </div>
-              </div>
-            )}
-            <p className="mt-5 text-center text-sm text-ink-soft">New to SuperPort? <Link href="/register" className="font-semibold text-port">Create an account</Link></p>
+
+            <p className="mt-6 text-center text-sm text-ink-soft">
+              New to SuperPort?{" "}
+              <Link href="/register" className="font-semibold text-port">
+                Create an account
+              </Link>
+            </p>
             <p className="mt-6 text-center text-xs leading-relaxed text-ink-faint">
               Evaluation environment. SuperPort enforces human review prior to customs submission.
             </p>
