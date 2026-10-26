@@ -41,7 +41,15 @@ export interface IntelligenceStatus {
 export interface HsDecision { status: "approved" | "edited" | "rejected"; code: string | null; by: string; note: string; ai_code?: string }
 export type ItemStatus = "ok" | "info" | "warn" | "issue";
 export interface ComplianceItem { id: string; title: string; status: ItemStatus; summary: string; details: string[] }
-export interface Inconsistency { field: string; severity: "warn" | "issue"; message: string; values: Record<string, string> }
+export interface Inconsistency {
+  field: string;
+  severity: "warn" | "issue" | "resolved";
+  message: string;
+  values: Record<string, string>;
+  resolved?: boolean;
+  resolved_by?: string;
+  resolved_note?: string;
+}
 export interface Compliance {
   overall: "clear" | "needs_review" | "action_required"; review_status: string; items: ComplianceItem[];
   missing_documents: string[]; restrictions: string[]; certificates: { name: string; status: string; source?: number }[]; rules_basis?: string;

@@ -55,6 +55,21 @@ def cross_check(shipment, docs) -> list[dict]:
     origin = ci("country_of_origin")
     if origin and similarity(origin, shipment.origin) < 0.8:
         out.append(_issue("Country of origin", "issue", "Invoice country of origin differs from the shipment origin.", {"Shipment": shipment.origin, "Commercial Invoice": origin}))
+
+    overrides = (getattr(shipment, "intel", None) or {}).get("inconsistency_overrides") or {}
+    for item in out:
+        fld = item["field"]
+        msg = item["message"]
+        matched_override = None
+        for ok, ov in overrides.items():
+            if ok == fld or ok == f"{fld}:{msg}" or ok.startswith(f"{fld}:"):
+                matched_override = ov
+                break
+        if matched_override:
+            item["resolved"] = True
+            item["resolved_by"] = matched_override.get("by", "Customs Broker")
+            item["resolved_note"] = matched_override.get("note", "Broker verified variation")
+
     return out
 
 
@@ -63,6 +78,7 @@ def run(shipment, docs, hs_result, hs_decision) -> dict:
     missing = [DOC_LABELS[t] for t in REQUIRED_DOCS if t not in present]
     unprocessed = [DOC_LABELS[d.doc_type] for d in docs if d.status != "ready"]
     inconsistencies = cross_check(shipment, docs)
+    unresolved_incs = [i for i in inconsistencies if not i.get("resolved")]
     item, _ = match_item(" ".join([shipment.product_description, (hs_result or {}).get("product_description", "")]))
     if hs_result and hs_result.get("item_key") != "generic":
         item = next((i for i in CATALOG if i["key"] == hs_result["item_key"]), item)
@@ -125,9 +141,9 @@ def run(shipment, docs, hs_result, hs_decision) -> dict:
         {
             "id": "inconsistencies",
             "title": "Data inconsistencies",
-            "status": "issue" if any(i["severity"] == "issue" for i in inconsistencies) else ("warn" if inconsistencies else "ok"),
-            "summary": f"{len(inconsistencies)} found across documents." if inconsistencies else "Documents agree with each other and the shipment record.",
-            "details": [i["message"] for i in inconsistencies],
+            "status": "issue" if any(i["severity"] == "issue" for i in unresolved_incs) else ("warn" if unresolved_incs else "ok"),
+            "summary": f"{len(unresolved_incs)} found across documents." if unresolved_incs else ("All document discrepancies resolved and verified." if inconsistencies else "Documents agree with each other and the shipment record."),
+            "details": [i["message"] for i in unresolved_incs],
         },
         company_item,
     ]

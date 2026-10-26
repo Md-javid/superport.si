@@ -35,7 +35,7 @@ def run(shipment, docs, hs_result, hs_decision, compliance) -> dict:
         item = next((i for i in CATALOG if i["key"] == hs_result["item_key"]), GENERIC_ITEM)
 
     # Document consistency
-    incs = compliance["inconsistencies"]
+    incs = [i for i in compliance.get("inconsistencies", []) if not i.get("resolved") and i.get("severity") != "resolved"]
     doc_score = min(100.0, sum(38 if i["severity"] == "issue" else 16 for i in incs))
     doc_note = "No conflicts between documents." if not incs else f"{len(incs)} inconsistenc{'y' if len(incs) == 1 else 'ies'} across documents."
 

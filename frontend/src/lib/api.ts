@@ -182,6 +182,11 @@ export const api = {
   process: (id: number) => post<ShipmentDetail>(`/shipments/${id}/process`),
   editField: (id: number, docId: number, key: string, value: string) =>
     request<ShipmentDetail>(`/shipments/${id}/documents/${docId}/fields/${key}`, { method: "PATCH", body: JSON.stringify({ value }) }),
+  updateShipment: (id: number, body: Record<string, any>) =>
+    request<ShipmentDetail>(`/shipments/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  resolveInconsistency: (id: number, body: { action: string; field?: string; chosen_value?: string; doc_name?: string; note?: string }) =>
+    post<ShipmentDetail>(`/shipments/${id}/inconsistencies/resolve`, body),
+  reconcileAll: (id: number) => post<ShipmentDetail>(`/shipments/${id}/reconcile`),
   confirmExtraction: (id: number) => post<ShipmentDetail>(`/shipments/${id}/extraction/confirm`),
   reviewHs: (id: number, action: string, hs_code?: string, note?: string) => post<ShipmentDetail>(`/shipments/${id}/hs/review`, { action, hs_code, note }),
   decide: (id: number, action: string, note?: string) => post<ShipmentDetail>(`/shipments/${id}/decision`, { action, note }),

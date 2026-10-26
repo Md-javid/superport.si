@@ -32,3 +32,22 @@ class HsReviewIn(BaseModel):
 class DecisionIn(BaseModel):
     action: str  # approve | reject | edit | reanalyze
     note: str | None = Field(default=None, max_length=1000)
+
+
+class ShipmentUpdateIn(BaseModel):
+    importer: str | None = Field(default=None, max_length=200)
+    exporter: str | None = Field(default=None, max_length=200)
+    origin: str | None = Field(default=None, max_length=100)
+    destination: str | None = Field(default=None, max_length=100)
+    port: str | None = Field(default=None, max_length=160)
+    carrier: str | None = Field(default=None, max_length=120)
+    container_number: str | None = Field(default=None, max_length=40)
+    product_description: str | None = Field(default=None, max_length=2000)
+
+
+class InconsistencyActionIn(BaseModel):
+    action: str  # apply | resolve_all | dismiss | reopen
+    field: str | None = None
+    chosen_value: str | None = None
+    doc_name: str | None = None
+    note: str | None = None

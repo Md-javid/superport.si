@@ -29,8 +29,21 @@ def similarity(a: str | None, b: str | None) -> float:
         return 0.0
     # Ignore generic legal suffixes so "Acme Ltd" matches "Acme Limited".
     drop = {"ltd", "limited", "pvt", "private", "co", "inc", "llc", "corp", "company", "gmbh", "sa"}
-    ta = " ".join(t for t in na.split() if t not in drop)
-    tb = " ".join(t for t in nb.split() if t not in drop)
+    tokens_a = [t for t in na.split() if t not in drop]
+    tokens_b = [t for t in nb.split() if t not in drop]
+    ta = " ".join(tokens_a)
+    tb = " ".join(tokens_b)
+    if not ta or not tb:
+        return 0.0
+    if ta == tb:
+        return 1.0
+    # If one starts with the other (common when one has address appended)
+    if ta.startswith(tb) or tb.startswith(ta):
+        return 0.95
+    # Token subset (e.g. all core entity name words match)
+    set_a, set_b = set(tokens_a), set(tokens_b)
+    if set_a and (set_a.issubset(set_b) or set_b.issubset(set_a)):
+        return 0.92
     return SequenceMatcher(None, ta, tb).ratio()
 
 

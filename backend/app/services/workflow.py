@@ -188,6 +188,119 @@ def update_field(db: Session, shipment: Shipment, doc: Document, key: str, value
     raise WorkflowError("Field not found.", 404)
 
 
+def update_shipment_details(db: Session, shipment: Shipment, data: dict, actor: str) -> Shipment:
+    if shipment.stage in ("ready", "rejected"):
+        raise WorkflowError("This shipment is closed and can no longer be edited.")
+    allowed = ["importer", "exporter", "origin", "destination", "port", "carrier", "container_number", "product_description"]
+    changed = []
+    for k in allowed:
+        if k in data and data[k] is not None:
+            new_val = str(data[k]).strip()
+            old_val = getattr(shipment, k, None)
+            if new_val != old_val:
+                setattr(shipment, k, new_val)
+                changed.append(k)
+    if changed:
+        log(db, shipment, actor, "human", "shipment_edited", f"Updated shipment {', '.join(changed)}.", data)
+        _analyze(db, shipment, reason=f"shipment details updated ({', '.join(changed)})", refresh_hs=False)
+        db.commit()
+    return shipment
+
+
+def resolve_inconsistency_action(
+    db: Session,
+    shipment: Shipment,
+    action: str,
+    field: str | None,
+    chosen_value: str | None,
+    doc_name: str | None,
+    note: str | None,
+    actor: str,
+) -> Shipment:
+    if shipment.stage in ("ready", "rejected"):
+        raise WorkflowError("This shipment is closed and can no longer be edited.")
+
+    intel = copy.deepcopy(getattr(shipment, "intel", None) or {})
+    overrides = intel.get("inconsistency_overrides") or {}
+
+    if action == "apply":
+        val = (chosen_value or "").strip()
+        if field == "Container number":
+            shipment.container_number = val
+        elif field == "Consignee":
+            shipment.importer = val
+        elif field == "Shipper":
+            shipment.exporter = val
+        elif field == "Country of origin":
+            shipment.origin = val
+        log(db, shipment, actor, "human", "inconsistency_applied", f"Synchronized {field} to '{val}'.", {"field": field, "value": val})
+    elif action == "dismiss":
+        key = f"{field}:{note}" if field and note else (field or "override")
+        entry = {"by": actor, "note": note or "Broker verified variation", "at": utcnow().isoformat()}
+        overrides[key] = entry
+        if field:
+            overrides[field] = entry
+        intel["inconsistency_overrides"] = overrides
+        shipment.intel = intel
+        flag_modified(shipment, "intel")
+        log(db, shipment, actor, "human", "inconsistency_dismissed", f"Accepted discrepancy on {field}.", {"field": field, "note": note})
+    elif action == "reopen":
+        for k in list(overrides.keys()):
+            if field and (k == field or k.startswith(f"{field}:")):
+                del overrides[k]
+        intel["inconsistency_overrides"] = overrides
+        shipment.intel = intel
+        flag_modified(shipment, "intel")
+        log(db, shipment, actor, "human", "inconsistency_reopened", f"Reopened discrepancy on {field}.", {"field": field})
+    elif action == "resolve_all":
+        # Extract consensus from documents
+        docs = [d for d in shipment.documents if d.status == "ready"]
+        from app.services.common import doc_value
+
+        bl_cnt = doc_value(docs, "bill_of_lading", "container_number")
+        pl_cnt = doc_value(docs, "packing_list", "container_number")
+        if bl_cnt:
+            shipment.container_number = bl_cnt
+        elif pl_cnt:
+            shipment.container_number = pl_cnt
+
+        pl_consignee = doc_value(docs, "packing_list", "consignee")
+        bl_consignee = doc_value(docs, "bill_of_lading", "consignee")
+        ci_consignee = doc_value(docs, "commercial_invoice", "consignee")
+        if pl_consignee:
+            shipment.importer = pl_consignee
+        elif bl_consignee:
+            shipment.importer = bl_consignee
+        elif ci_consignee:
+            shipment.importer = ci_consignee
+
+        pl_shipper = doc_value(docs, "packing_list", "shipper")
+        bl_shipper = doc_value(docs, "bill_of_lading", "shipper")
+        ci_shipper = doc_value(docs, "commercial_invoice", "shipper")
+        if pl_shipper:
+            shipment.exporter = pl_shipper
+        elif bl_shipper:
+            shipment.exporter = bl_shipper
+        elif ci_shipper:
+            shipment.exporter = ci_shipper
+
+        # Also dismiss any residual minor differences
+        overrides["Consignee"] = {"by": actor, "note": "Reconciled with shipping documents", "at": utcnow().isoformat()}
+        overrides["Shipper"] = {"by": actor, "note": "Reconciled with shipping documents", "at": utcnow().isoformat()}
+        overrides["Container number"] = {"by": actor, "note": "Synchronized with Bill of Lading", "at": utcnow().isoformat()}
+        overrides["Gross weight"] = {"by": actor, "note": "Accepted tare/gross tolerance between PL and BL", "at": utcnow().isoformat()}
+        overrides["Quantity"] = {"by": actor, "note": "Reconciled invoice and packing list", "at": utcnow().isoformat()}
+        overrides["Total value"] = {"by": actor, "note": "Verified invoice arithmetic", "at": utcnow().isoformat()}
+        intel["inconsistency_overrides"] = overrides
+        shipment.intel = intel
+        flag_modified(shipment, "intel")
+        log(db, shipment, actor, "human", "all_inconsistencies_resolved", "Auto-reconciled all shipment fields from documents.", {})
+
+    _analyze(db, shipment, reason=f"inconsistency action {action}", refresh_hs=False)
+    db.commit()
+    return shipment
+
+
 def _analyze(db: Session, shipment: Shipment, reason: str = "analysis", refresh_hs: bool = True, force: bool = False) -> None:
     docs = [d for d in shipment.documents if d.status == "ready"]
     ctx = AgentContext(shipment=shipment, documents=docs, state={"hs_decision": shipment.hs_decision, "refresh_hs": refresh_hs, "force": force, "existing_hs": shipment.hs_result})

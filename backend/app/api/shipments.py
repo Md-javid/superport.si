@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import current_user, get_shipment, raise_http
 from app.db import get_db
 from app.models import Document, Shipment, User
-from app.schemas import DecisionIn, FieldEdit, HsReviewIn, ShipmentIn
+from app.schemas import DecisionIn, FieldEdit, HsReviewIn, InconsistencyActionIn, ShipmentIn, ShipmentUpdateIn
 from app.services import serializers, workflow
 from app.services.workflow import WorkflowError
 
@@ -37,6 +37,33 @@ def create(body: ShipmentIn, db: Session = Depends(get_db), user: User = Depends
 
 @router.get("/{shipment_id}")
 def detail(shipment: Shipment = Depends(get_shipment), db: Session = Depends(get_db)):
+    return _detail(db, shipment)
+
+
+@router.patch("/{shipment_id}")
+def update_shipment(body: ShipmentUpdateIn, shipment: Shipment = Depends(get_shipment), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    try:
+        workflow.update_shipment_details(db, shipment, body.model_dump(exclude_unset=True), user.name)
+    except WorkflowError as e:
+        raise_http(e)
+    return _detail(db, shipment)
+
+
+@router.post("/{shipment_id}/inconsistencies/resolve")
+def resolve_inconsistency(body: InconsistencyActionIn, shipment: Shipment = Depends(get_shipment), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    try:
+        workflow.resolve_inconsistency_action(db, shipment, body.action, body.field, body.chosen_value, body.doc_name, body.note, user.name)
+    except WorkflowError as e:
+        raise_http(e)
+    return _detail(db, shipment)
+
+
+@router.post("/{shipment_id}/reconcile")
+def reconcile(shipment: Shipment = Depends(get_shipment), db: Session = Depends(get_db), user: User = Depends(current_user)):
+    try:
+        workflow.resolve_inconsistency_action(db, shipment, "resolve_all", None, None, None, None, user.name)
+    except WorkflowError as e:
+        raise_http(e)
     return _detail(db, shipment)
 
 
